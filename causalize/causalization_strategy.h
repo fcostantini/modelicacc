@@ -24,6 +24,9 @@
  *      Author: fede
  */
 
+#ifndef CAUSALIZE_H
+#define CAUSALIZE_H
+
 #include <causalize/graph/graph_definition.h>
 #include <mmo/mmo_class.h>
 
@@ -35,6 +38,8 @@ public:
   void Causalize();
   void CausalizeSimple();
   void CausalizeTarjan();
+protected:
+  CausalizationGraph _graph;
 private:
   void SimpleCausalizationStrategy();
   Edge GetUniqueEdge(Vertex v);
@@ -43,7 +48,6 @@ private:
   void MakeCausalMiddle();
   void MakeCausalEnd(Modelica::AST::Equation eq, Modelica::AST::Expression unknown);
 
-  CausalizationGraph _graph;
   Modelica::MMO_Class &_mmo_class;
   Modelica::AST::EquationList _causalEqsBegining;
   Modelica::AST::EquationList _causalEqsMiddle;
@@ -54,3 +58,5 @@ private:
   std::list<std::string> c_code;
 };
 }
+
+#endif
