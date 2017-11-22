@@ -34,7 +34,7 @@ public:
   Pantelides(Modelica::MMO_Class &mmo_class);
   void ApplyPantelides();
 private:
-  bool MatchEquation(Equation f, std::set<Vertex> &coloured);
+  bool MatchEquation(EquationVertex fVertex, std::set<Vertex> &coloured);
   void MakeGraphSets();
   std::set<UnknownVertex> unknownSet;
   std::set<EquationVertex> equationSet;

@@ -39,14 +39,27 @@ using namespace Causalize;
 
 namespace Pant {
 Pantelides::Pantelides(MMO_Class &mmo_class): Causalize::CausalizationStrategy(mmo_class) {
+  //TODO: (ask how to do this)
   //add state variables to graph as unknowns
+  //initialize varMap
+}
+
+void Pantelides::ApplyPantelides(){
   std::set<EquationVertex> initialEquationSet = equationSet;
   for(EquationVertex eq : initialEquationSet){
-    Equation f = _graph[eq].equation;
+    EquationVertex fVertex = eq;
     bool match;
     do {
+//      //search for the node corresponding to the equation f (it should exist obviously)
+//      EquationVertex fVertex;
+//      for(EquationVertex eqV : equationSet){
+//        if(_graph[eqV].equation == f){
+//          fVertex = eqV;
+//          break;
+//        }
+//      }
       std::set<Vertex> coloured;
-      match = MatchEquation(f, coloured);
+      match = MatchEquation(fVertex, coloured);
       if(!match){
         for(Vertex u : coloured){
           set<UnknownVertex>::iterator it = unknownSet.find(u);
@@ -96,7 +109,7 @@ Pantelides::Pantelides(MMO_Class &mmo_class): Causalize::CausalizationStrategy(m
           }
           else DEBUG('c', "Something's wrong, we should have coloured equations (second for)\n");
         }
-        
+
         for(Vertex u : coloured){
           set<UnknownVertex>::iterator it = unknownSet.find(u);
           if (it != unknownSet.end()) {
@@ -109,22 +122,42 @@ Pantelides::Pantelides(MMO_Class &mmo_class): Causalize::CausalizationStrategy(m
           }
           else DEBUG('c', "Something's wrong, we should have coloured unknowns (third for)\n");
         }
-        //search for the node corresponding to the equation f (it should exist obviously)
-        EquationVertex fVertex;
-        for(EquationVertex eqV : equationSet){
-          if(_graph[eqV].equation == f){
-            fVertex = eqV;
-            break;
-          }
-        }
-        f = _graph[eqMap.at(fVertex)].equation; //check for exception, it should exist though
+
+        fVertex = eqMap.at(fVertex); //check for exception, it should exist though
       }
     } while(!match);
   }
 }
 
-bool Pantelides::MatchEquation(Equation f, std::set<Vertex> &coloured){
-  return true;
+bool Pantelides::MatchEquation(EquationVertex fVertex, std::set<Vertex> &coloured){
+  coloured.insert(fVertex);
+  boost::graph_traits<CausalizationGraph>::adjacency_iterator ai, ai_end;
+  for(boost::tie(ai, ai_end) = boost::adjacent_vertices(fVertex, _graph); ai != ai_end; ++ai){
+    UnknownVertex uv = *ai;
+    auto varMapIt = varMap.find(uv); //TODO: types
+    auto assignIt = assign.find(uv);
+    //if vertex is not assigned, i.e. it has the highest degree
+    if(varMapIt == varMap.end() && assignIt == assign.end()){
+      assign[uv] = fVertex;
+      return true;
+    }  
+  }
+  
+  for(boost::tie(ai, ai_end) = boost::adjacent_vertices(fVertex, _graph); ai != ai_end; ++ai){
+    UnknownVertex uv = *ai;
+    auto varMapIt = varMap.find(uv); //TODO: types
+    auto colouredIt = coloured.find(uv);
+    //if vertex is not coloured
+    if(varMapIt == varMap.end() && colouredIt == coloured.end()){
+      coloured.insert(uv);
+      EquationVertex assignedToUv = assign.at(uv); //this exists because we would've returned in the previous for if not
+      if(MatchEquation(assignedToUv, coloured)){
+        assign[uv] = fVertex;
+        return true;
+      }
+    }  
+  }
+  return false;
 }
 
 void Pantelides::MakeGraphSets(){
