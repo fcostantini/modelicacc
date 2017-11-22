@@ -27,12 +27,12 @@
 #include <ast/queries.h>
 #include <util/derivate.h>
 #include <boost/variant/get.hpp>
-#include <util/ast_visitors/part_evalexp.h>
+#include <util/ast_visitors/partial_eval_expression.h>
 
 
 namespace Modelica {
     Equality derivate_equality(Equality eq, VarSymbolTable syms) {
-    PartEvalExp eval(syms, true);
+    PartialEvalExpression eval(syms, true);
     Expression left= Apply(eval,eq.left_ref());    
     Expression right= Apply(eval,eq.right_ref());
     eq.left_ref()=derivate(left,syms);

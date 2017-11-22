@@ -40,6 +40,7 @@ public:
   void CausalizeTarjan();
 protected:
   CausalizationGraph _graph;
+  Modelica::MMO_Class &_mmo_class;
 private:
   void SimpleCausalizationStrategy();
   Edge GetUniqueEdge(Vertex v);
@@ -48,7 +49,6 @@ private:
   void MakeCausalMiddle();
   void MakeCausalEnd(Modelica::AST::Equation eq, Modelica::AST::Expression unknown);
 
-  Modelica::MMO_Class &_mmo_class;
   Modelica::AST::EquationList _causalEqsBegining;
   Modelica::AST::EquationList _causalEqsMiddle;
   std::vector<Modelica::AST::Equation> _causalEqsEnd;

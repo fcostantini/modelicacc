@@ -4,6 +4,8 @@ SRC_REDUCEINDEX := reduceindex/main.cpp \
                    util/debug.cpp \
                    util/table.cpp \
                    util/type.cpp \
+                   util/derivate.cpp \
+                   util/derivate_equality.cpp \
                    util/solve/solve.cpp \
                    util/ast_visitors/eval_expression.cpp \
                    util/ast_visitors/partial_eval_expression.cpp \
@@ -16,10 +18,6 @@ SRC_REDUCEINDEX := reduceindex/main.cpp \
                    causalize/state_variables_finder.cpp \
                    causalize/unknowns_collector.cpp \
                    causalize/causalization_strategy.cpp \
-                   causalize/vector/contains_vector.cpp \
-                   causalize/vector/graph_builder.cpp \
-                   causalize/vector/causalization_algorithm.cpp \
-                   causalize/vector/splitfor.cpp \
                    causalize/graph/graph_definition.cpp \
                    mmo/mmo_class.cpp
 

@@ -24,6 +24,8 @@
 #include <ast/ast_types.h>
 #include <causalize/for_unrolling/process_for_equations.h>
 #include <util/debug.h>
+#include <util/derivate.h>
+#include <util/derivate_equality.h>
 #include <causalize/unknowns_collector.h>
 #include <boost/lambda/lambda.hpp>
 #include <ast/equation.h>
@@ -42,6 +44,7 @@ Pantelides::Pantelides(MMO_Class &mmo_class): Causalize::CausalizationStrategy(m
   //TODO: (ask how to do this)
   //add state variables to graph as unknowns
   //initialize varMap
+  MakeGraphSets();
 }
 
 void Pantelides::ApplyPantelides(){
@@ -68,7 +71,9 @@ void Pantelides::ApplyPantelides(){
               Unknown currentUnknown = _graph[uv].unknown;
               //create new unknown
               VertexProperty vp;
-              vp.unknown = currentUnknown; //TODO: derivative here, ask how
+              Unknown derUnknown = currentUnknown;
+              derUnknown.expression = derivate(currentUnknown.expression, _mmo_class.syms_ref());
+              vp.unknown = derUnknown; //is this correct?
               vp.type = U;
               //vp.index = index++; //do these two matter?
               //vp.visited = false:
@@ -87,7 +92,8 @@ void Pantelides::ApplyPantelides(){
             Equation currentEquation = _graph[ev].equation;
             //create new unknown
             VertexProperty vp;
-            vp.equation = currentEquation; //TODO: derivative here, ask how
+            Equality currentEquality = boost::get<Equality>(currentEquation);
+            vp.equation = derivate_equality(currentEquality, _mmo_class.syms_ref()); //is this correct?
             vp.type = E;
             //vp.index = index++; //do these two matter?
             //vp.visited = false:
@@ -140,9 +146,9 @@ bool Pantelides::MatchEquation(EquationVertex fVertex, std::set<Vertex> &coloure
     if(varMapIt == varMap.end() && assignIt == assign.end()){
       assign[uv] = fVertex;
       return true;
-    }  
+    }
   }
-  
+
   for(boost::tie(ai, ai_end) = boost::adjacent_vertices(fVertex, _graph); ai != ai_end; ++ai){
     UnknownVertex uv = *ai;
     auto varMapIt = varMap.find(uv); //TODO: types
@@ -155,7 +161,7 @@ bool Pantelides::MatchEquation(EquationVertex fVertex, std::set<Vertex> &coloure
         assign[uv] = fVertex;
         return true;
       }
-    }  
+    }
   }
   return false;
 }
