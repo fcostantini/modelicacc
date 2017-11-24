@@ -39,7 +39,7 @@
 #include <util/ast_visitors/contains_expression.h>
 #include <util/ast_visitors/partial_eval_expression.h>
 #include <util/solve/solve.h>
-#include <fstream> 
+#include <fstream>
 
 using namespace Modelica::AST;
 namespace Causalize {
@@ -58,7 +58,7 @@ CausalizationStrategy::CausalizationStrategy(MMO_Class &mmo_class): _mmo_class(m
            equations.size(), unknowns.size());
   }
 
-  int index = 0;
+  _equationIndex = 0;
 
   _all_unknowns = unknowns;
 
@@ -76,7 +76,7 @@ CausalizationStrategy::CausalizationStrategy(MMO_Class &mmo_class): _mmo_class(m
     eq.right_ref()=Apply(eval ,eq.right_ref());
     vp.equation = e;
     vp.type = E;
-    vp.index = index++;
+    vp.index = _equationIndex++;
     vp.visited = false;
     Vertex v = add_vertex(vp, _graph);
     eqVerts.push_back(v);
@@ -86,12 +86,12 @@ CausalizationStrategy::CausalizationStrategy(MMO_Class &mmo_class): _mmo_class(m
 
   DEBUG('c', "Unknown indexes:\n");
 
-  index = 0;
+  _unknownIndex = 0;
   foreach_(Expression e, unknowns) {
     VertexProperty vp;
     vp.unknown = Unknown(e);
     vp.type = U;
-    vp.index = index++;
+    vp.index = _unknownIndex++;
     vp.visited = false;
     Vertex v = add_vertex(vp, _graph);
     unknownVerts.push_back(v);

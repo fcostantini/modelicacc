@@ -41,6 +41,8 @@ public:
 protected:
   CausalizationGraph _graph;
   Modelica::MMO_Class &_mmo_class;
+  int _unknownIndex;
+  int _equationIndex;
 private:
   void SimpleCausalizationStrategy();
   Edge GetUniqueEdge(Vertex v);

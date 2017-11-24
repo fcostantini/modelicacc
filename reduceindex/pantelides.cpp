@@ -75,14 +75,13 @@ void Pantelides::ApplyPantelides(){
               derUnknown.expression = derivate(currentUnknown.expression, _mmo_class.syms_ref());
               vp.unknown = derUnknown; //is this correct?
               vp.type = U;
-              //vp.index = index++; //do these two matter?
-              //vp.visited = false:
+              vp.index = _unknownIndex++; 
+              //vp.visited = false; //does this matter?
               Vertex newUnknown = add_vertex(vp, _graph);
 
               unknownSet.insert(newUnknown);
               varMap[uv] = newUnknown;//.push_back(std::make_pair(currentUnknown, vp.unknown));
           }
-          else DEBUG('c', "Something's wrong, we should have coloured unknowns (first for)\n");
         }
 
         for(Vertex e : coloured){
@@ -95,8 +94,8 @@ void Pantelides::ApplyPantelides(){
             Equality currentEquality = boost::get<Equality>(currentEquation);
             vp.equation = derivate_equality(currentEquality, _mmo_class.syms_ref()); //is this correct?
             vp.type = E;
-            //vp.index = index++; //do these two matter?
-            //vp.visited = false:
+            vp.index = _equationIndex++; 
+            //vp.visited = false; //does this matter?
             Vertex newEquation = add_vertex(vp, _graph);
 
             equationSet.insert(newEquation);
@@ -113,7 +112,6 @@ void Pantelides::ApplyPantelides(){
               }
             }
           }
-          else DEBUG('c', "Something's wrong, we should have coloured equations (second for)\n");
         }
 
         for(Vertex u : coloured){
@@ -126,9 +124,8 @@ void Pantelides::ApplyPantelides(){
               EquationVertex assignedToUvDer = eqMap.at(assignedToUv);
               assign[uvDer] = assignedToUvDer;
           }
-          else DEBUG('c', "Something's wrong, we should have coloured unknowns (third for)\n");
         }
-
+        
         fVertex = eqMap.at(fVertex); //check for exception, it should exist though
       }
     } while(!match);
