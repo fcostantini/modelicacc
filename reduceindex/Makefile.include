@@ -1,6 +1,7 @@
 all: bin/reduceindex
 SRC_REDUCEINDEX := reduceindex/main.cpp \
                    reduceindex/pantelides.cpp \
+                   reduceindex/variables_collector.cpp \
                    util/debug.cpp \
                    util/table.cpp \
                    util/type.cpp \

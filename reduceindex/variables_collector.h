@@ -17,24 +17,18 @@
 
 ******************************************************************************/
 
-#ifndef UNKNOWNS_COLLECTOR_H
-#define UNKNOWNS_COLLECTOR_H
+#ifndef VARIABLES_COLECTOR_H
+#define VARIABLES_COLECTOR_H
 
-#include <mmo/mmo_class.h>
-#include <causalize/state_variables_finder.h>
+#include <causalize/unknowns_collector.h>
 
-using namespace std;
 using namespace Modelica;
 using namespace Modelica::AST;
 
-class UnknownsCollector {
-	public:
-		UnknownsCollector(MMO_Class &c);
-		ExpList collectUnknowns();
-	protected:
-		int getCompRefVal(Reference compRef, VarSymbolTable &symbolTable);
-		MMO_Class &_c;
-		StateVariablesFinder _finder;
+class VariablesCollector : public UnknownsCollector{
+  public:
+		VariablesCollector(MMO_Class &c);
+		std::pair<ExpList, std::vector<std::pair<Expression, Expression>>> collectVariables();
 };
 
 #endif

@@ -75,7 +75,7 @@ void Pantelides::ApplyPantelides(){
               derUnknown.expression = derivate(currentUnknown.expression, _mmo_class.syms_ref());
               vp.unknown = derUnknown; //is this correct?
               vp.type = U;
-              vp.index = _unknownIndex++; 
+              vp.index = _unknownIndex++;
               //vp.visited = false; //does this matter?
               Vertex newUnknown = add_vertex(vp, _graph);
 
@@ -94,7 +94,7 @@ void Pantelides::ApplyPantelides(){
             Equality currentEquality = boost::get<Equality>(currentEquation);
             vp.equation = derivate_equality(currentEquality, _mmo_class.syms_ref()); //is this correct?
             vp.type = E;
-            vp.index = _equationIndex++; 
+            vp.index = _equationIndex++;
             //vp.visited = false; //does this matter?
             Vertex newEquation = add_vertex(vp, _graph);
 
@@ -125,7 +125,7 @@ void Pantelides::ApplyPantelides(){
               assign[uvDer] = assignedToUvDer;
           }
         }
-        
+
         fVertex = eqMap.at(fVertex); //check for exception, it should exist though
       }
     } while(!match);

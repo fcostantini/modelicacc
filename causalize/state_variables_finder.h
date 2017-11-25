@@ -24,6 +24,9 @@
  *      Author: fede
  */
 
+#ifndef STATE_VARIABLES_FINDER_H
+#define STATE_VARIABLES_FINDER_H
+
 #include <ast/expression.h>
 #include <mmo/mmo_class.h>
 #include <util/table.h>
@@ -61,3 +64,4 @@ private:
 	Modelica::MMO_Class &_c;
 };
 
+#endif
