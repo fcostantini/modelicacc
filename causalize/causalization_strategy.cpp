@@ -43,6 +43,7 @@
 
 using namespace Modelica::AST;
 namespace Causalize {
+CausalizationStrategy::CausalizationStrategy(MMO_Class &mmo_class, bool dummy): _mmo_class(mmo_class){}
 CausalizationStrategy::CausalizationStrategy(MMO_Class &mmo_class): _mmo_class(mmo_class) {
 
   Causalize::process_for_equations(mmo_class);
@@ -99,7 +100,7 @@ CausalizationStrategy::CausalizationStrategy(MMO_Class &mmo_class): _mmo_class(m
       cout << vp.index << ":" << e << endl;
    }
 
-  DEBUG('c', "Graph edges as (equation_index, uknown_index):\n");
+  DEBUG('c', "Graph edges as (equation_index, unknown_index):\n");
 
   list<Vertex>::iterator acausalEqsIter, unknownsIter;
   foreach_(Vertex eqVertex, eqVerts) {

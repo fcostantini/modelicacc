@@ -35,6 +35,7 @@ namespace Causalize {
 class CausalizationStrategy {
 public:
   CausalizationStrategy(Modelica::MMO_Class &mmo_class);
+  CausalizationStrategy(Modelica::MMO_Class &mmo_class, bool dummy);
   void Causalize();
   void CausalizeSimple();
   void CausalizeTarjan();

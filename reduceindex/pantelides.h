@@ -36,11 +36,13 @@ public:
 private:
   bool MatchEquation(EquationVertex fVertex, std::set<Vertex> &coloured);
   void MakeGraphSets();
-  std::set<UnknownVertex> unknownSet;
-  std::set<EquationVertex> equationSet;
-  std::map<UnknownVertex, UnknownVertex> varMap; //var to derivated var
-  std::map<EquationVertex, EquationVertex> eqMap; //eq to derivated eq
-  std::map<UnknownVertex, EquationVertex> assign; //var to eqs
+  void InitializeVarMap(std::vector<std::pair<Expression, Expression>> expMap);
+  
+  std::set<UnknownVertex> _unknownSet;
+  std::set<EquationVertex> _equationSet;
+  std::map<UnknownVertex, UnknownVertex> _varMap; //var to derivated var
+  std::map<EquationVertex, EquationVertex> _eqMap; //eq to derivated eq
+  std::map<UnknownVertex, EquationVertex> _assign; //var to eqs
 };
 }
 

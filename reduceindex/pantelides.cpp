@@ -26,7 +26,7 @@
 #include <util/debug.h>
 #include <util/derivate.h>
 #include <util/derivate_equality.h>
-#include <causalize/unknowns_collector.h>
+#include <reduceindex/variables_collector.h>
 #include <boost/lambda/lambda.hpp>
 #include <ast/equation.h>
 #include <boost/variant/get.hpp>
@@ -36,19 +36,91 @@
 #include <util/solve/solve.h>
 #include <fstream>
 
+#include "variables_collector.h"
+
 using namespace Modelica::AST;
 using namespace Causalize;
 
 namespace Pant {
-Pantelides::Pantelides(MMO_Class &mmo_class): Causalize::CausalizationStrategy(mmo_class) {
-  //TODO: (ask how to do this)
-  //add state variables to graph as unknowns
-  //initialize varMap
+Pantelides::Pantelides(MMO_Class &mmo_class): Causalize::CausalizationStrategy(mmo_class, false) {
+
+  process_for_equations(mmo_class);
+
+  const EquationList &equations = mmo_class.equations_ref().equations_ref();
+
+  VariablesCollector collector(mmo_class);
+  std::pair<ExpList, std::vector<std::pair<Expression, Expression>>> collection = collector.collectVariables();
+  ExpList unknowns = collection.first;
+  std::vector<std::pair<Expression, Expression>> unknownDerMap = collection.second;
+
+   _equationIndex = 0;
+
+  std::list<Vertex> eqVerts;
+  std::list<Vertex> unknownVerts;
+
+  DEBUG('c', "Building causalization graph...\n");
+  DEBUG('c', "Equation indexes:\n");
+
+  foreach_(Equation e, equations) {
+    VertexProperty vp;
+    Equality &eq = get<Equality>(e);
+    PartialEvalExpression eval(_mmo_class.syms_ref(),false);
+    eq.left_ref()= Apply(eval ,eq.left_ref());
+    eq.right_ref()= Apply(eval ,eq.right_ref());
+    vp.equation = e;
+    vp.type = E;
+    vp.index = _equationIndex++;
+    vp.visited = false;
+    Vertex v = add_vertex(vp, _graph);
+    eqVerts.push_back(v);
+    if (debugIsEnabled('c'))
+      cout << vp.index << ":" << e << endl;
+  }
+
+  DEBUG('c', "Unknown indexes:\n");
+
+  _unknownIndex = 0;
+  foreach_(Expression e, unknowns) {
+    VertexProperty vp;
+    vp.unknown = Unknown(e);
+    vp.type = U;
+    vp.index = _unknownIndex++;
+    vp.visited = false;
+    Vertex v = add_vertex(vp, _graph);
+    unknownVerts.push_back(v);
+    if (debugIsEnabled('c'))
+      cout << vp.index << ":" << e << endl;
+   }
+
+  DEBUG('c', "Graph edges as (equation_index, unknown_index):\n");
+
+  list<Vertex>::iterator acausalEqsIter, unknownsIter;
+  foreach_(Vertex eqVertex, eqVerts) {
+    foreach_(Vertex unknownVertex , unknownVerts) {
+      Modelica::ContainsExpression occurrs(_graph[unknownVertex].unknown());
+      Equation e = _graph[eqVertex].equation;
+      ERROR_UNLESS(is<Equality>(e), "Causalization of non-equality equation is not supported");
+      Equality eq = boost::get<Equality>(e);
+      const bool rl = Apply(occurrs,eq.left_ref());
+      const bool ll = Apply(occurrs,eq.right_ref());
+      if(rl || ll) {
+        add_edge(eqVertex, unknownVertex, _graph);
+        DEBUG('c', "(%d, %d) ", _graph[eqVertex].index, _graph[unknownVertex].index);
+      }
+    }
+  }
+
+  DEBUG('c', "\n");
+
+  GraphPrinter<VertexProperty,EdgeProperty> gp(_graph);
+  gp.printGraph("initial_graph.dot");
+
   MakeGraphSets();
+  InitializeVarMap(unknownDerMap);
 }
 
 void Pantelides::ApplyPantelides(){
-  std::set<EquationVertex> initialEquationSet = equationSet;
+  std::set<EquationVertex> initialEquationSet = _equationSet;
   for(EquationVertex eq : initialEquationSet){
     EquationVertex fVertex = eq;
     bool match;
@@ -65,8 +137,8 @@ void Pantelides::ApplyPantelides(){
       match = MatchEquation(fVertex, coloured);
       if(!match){
         for(Vertex u : coloured){
-          set<UnknownVertex>::iterator it = unknownSet.find(u);
-          if (it != unknownSet.end()) {
+          set<UnknownVertex>::iterator it = _unknownSet.find(u);
+          if (it != _unknownSet.end()) {
               UnknownVertex uv = *it;
               Unknown currentUnknown = _graph[uv].unknown;
               //create new unknown
@@ -79,14 +151,14 @@ void Pantelides::ApplyPantelides(){
               //vp.visited = false; //does this matter?
               Vertex newUnknown = add_vertex(vp, _graph);
 
-              unknownSet.insert(newUnknown);
-              varMap[uv] = newUnknown;//.push_back(std::make_pair(currentUnknown, vp.unknown));
+              _unknownSet.insert(newUnknown);
+              _varMap[uv] = newUnknown;//.push_back(std::make_pair(currentUnknown, vp.unknown));
           }
         }
 
         for(Vertex e : coloured){
-          set<EquationVertex>::iterator it = equationSet.find(e);
-          if (it != equationSet.end()) {
+          set<EquationVertex>::iterator it = _equationSet.find(e);
+          if (it != _equationSet.end()) {
             EquationVertex ev = *it;
             Equation currentEquation = _graph[ev].equation;
             //create new unknown
@@ -98,15 +170,15 @@ void Pantelides::ApplyPantelides(){
             //vp.visited = false; //does this matter?
             Vertex newEquation = add_vertex(vp, _graph);
 
-            equationSet.insert(newEquation);
-            eqMap[ev] = newEquation; //.push_back(std::make_pair(currentEquation, vp.equation));
+            _equationSet.insert(newEquation);
+            _eqMap[ev] = newEquation; //.push_back(std::make_pair(currentEquation, vp.equation));
 
             boost::graph_traits<CausalizationGraph>::adjacency_iterator ai, ai_end;
             for(boost::tie(ai, ai_end) = boost::adjacent_vertices(ev, _graph); ai != ai_end; ++ai){
               UnknownVertex adj = *ai;
               add_edge(newEquation, adj, _graph);
-              std::map<UnknownVertex,UnknownVertex>::iterator varMapIt = varMap.find(adj);
-              if (varMapIt != varMap.end()){
+              std::map<UnknownVertex,UnknownVertex>::iterator varMapIt = _varMap.find(adj);
+              if (varMapIt != _varMap.end()){
                 UnknownVertex derAdj = varMapIt->second;
                 add_edge(newEquation, derAdj, _graph);
               }
@@ -115,18 +187,18 @@ void Pantelides::ApplyPantelides(){
         }
 
         for(Vertex u : coloured){
-          set<UnknownVertex>::iterator it = unknownSet.find(u);
-          if (it != unknownSet.end()) {
+          set<UnknownVertex>::iterator it = _unknownSet.find(u);
+          if (it != _unknownSet.end()) {
               UnknownVertex uv = *it;
               //check for exceptions, these should all exist though
-              UnknownVertex uvDer = varMap.at(uv);
-              EquationVertex assignedToUv = assign.at(uv);
-              EquationVertex assignedToUvDer = eqMap.at(assignedToUv);
-              assign[uvDer] = assignedToUvDer;
+              UnknownVertex uvDer = _varMap.at(uv);
+              EquationVertex assignedToUv = _assign.at(uv);
+              EquationVertex assignedToUvDer = _eqMap.at(assignedToUv);
+              _assign[uvDer] = assignedToUvDer;
           }
         }
 
-        fVertex = eqMap.at(fVertex); //check for exception, it should exist though
+        fVertex = _eqMap.at(fVertex); //check for exception, it should exist though
       }
     } while(!match);
   }
@@ -137,25 +209,25 @@ bool Pantelides::MatchEquation(EquationVertex fVertex, std::set<Vertex> &coloure
   boost::graph_traits<CausalizationGraph>::adjacency_iterator ai, ai_end;
   for(boost::tie(ai, ai_end) = boost::adjacent_vertices(fVertex, _graph); ai != ai_end; ++ai){
     UnknownVertex uv = *ai;
-    auto varMapIt = varMap.find(uv); //TODO: types
-    auto assignIt = assign.find(uv);
+    auto varMapIt = _varMap.find(uv); //TODO: types
+    auto assignIt = _assign.find(uv);
     //if vertex is not assigned, i.e. it has the highest degree
-    if(varMapIt == varMap.end() && assignIt == assign.end()){
-      assign[uv] = fVertex;
+    if(varMapIt == _varMap.end() && assignIt == _assign.end()){
+      _assign[uv] = fVertex;
       return true;
     }
   }
 
   for(boost::tie(ai, ai_end) = boost::adjacent_vertices(fVertex, _graph); ai != ai_end; ++ai){
     UnknownVertex uv = *ai;
-    auto varMapIt = varMap.find(uv); //TODO: types
+    auto varMapIt = _varMap.find(uv); //TODO: types
     auto colouredIt = coloured.find(uv);
     //if vertex is not coloured
-    if(varMapIt == varMap.end() && colouredIt == coloured.end()){
+    if(varMapIt == _varMap.end() && colouredIt == coloured.end()){
       coloured.insert(uv);
-      EquationVertex assignedToUv = assign.at(uv); //this exists because we would've returned in the previous for if not
+      EquationVertex assignedToUv = _assign.at(uv); //this exists because we would've returned in the previous for if not
       if(MatchEquation(assignedToUv, coloured)){
-        assign[uv] = fVertex;
+        _assign[uv] = fVertex;
         return true;
       }
     }
@@ -168,9 +240,24 @@ void Pantelides::MakeGraphSets(){
   for(boost::tie(vi,vi_end) = vertices(_graph); vi != vi_end; ++vi) {
     Vertex v = *vi;
     if (_graph[v].type == E) {
-      equationSet.insert(v);
+      _equationSet.insert(v);
     } else {
-      unknownSet.insert(v);
+      _unknownSet.insert(v);
+    }
+  }
+}
+
+void Pantelides::InitializeVarMap(std::vector<std::pair<Expression, Expression>> expMap){
+  for(auto uv : _unknownSet) {
+    Unknown u = _graph[uv].unknown;
+    auto expMapIt = std::find_if( expMap.begin(), expMap.end(), [](const std::pair<Expression, Expression>& exp){ return exp.first == u.expression;} );
+    if(expMapIt != expMap.end()){
+      Expression uDer = expMapIt->second;
+      auto unknownIt = std::find_if( _unknownSet.begin(), _unknownSet.end(), [](const UnknownVertex& uv){ return _graph[uv].unknown.expression == uDer;} );
+      if(unknownIt != _unknownSet.end()){
+          UnknownVertex der = *unknownIt;
+          _varMap[uv] = der;
+      }
     }
   }
 }
