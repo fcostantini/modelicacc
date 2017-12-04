@@ -58,8 +58,10 @@ namespace Causalize {
 
   /// @brief Empty edge properties for incidence graph 
   struct EdgeProperty {
+    std::string color;
+
     friend std::ostream & operator << (std::ostream &os, const EdgeProperty &ep) {
-      os << "";
+      os << color;
       return os;
     }
   };

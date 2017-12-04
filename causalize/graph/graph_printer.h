@@ -145,7 +145,9 @@ namespace Causalize {
 				      string name;
     	        stri << "eq" << graph[*eq_it].index << " -- var" << graph[unknown].index;
               EdgeProperty ep = graph[*ei];
-              stri << "[label = \"" << ep << "\"];";
+              stri << "[label = \"" << "\", ";
+              stri << "color = \"" << ep << "\"];";
+
 			      }
 		      }
 	      DELETE_TAB

@@ -71,8 +71,8 @@ namespace Modelica {
     }
     bool ContainsExpression::operator()(Call v) const { 
       if (exp==Expression(v)) return true; 
-      foreach_ (Expression e, v.args()) 
-        if (ApplyThis(e)) return true;
+      //foreach_ (Expression e, v.args()) TODO: ask about this
+        //if (ApplyThis(e)) return true;
       return false;
     }
     bool ContainsExpression::operator()(FunctionExp v) const { 

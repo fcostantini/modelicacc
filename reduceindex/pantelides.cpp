@@ -165,6 +165,7 @@ void Pantelides::ApplyPantelides(){
             VertexProperty vp;
             Equality currentEquality = boost::get<Equality>(currentEquation);
             vp.equation = derivate_equality(currentEquality, _mmo_class.syms_ref()); //is this correct?
+            _mmo_class.equations_ref().addEquation(vp.equation);
             vp.type = E;
             vp.index = _equationIndex++;
             //vp.visited = false; //does this matter?
@@ -176,11 +177,13 @@ void Pantelides::ApplyPantelides(){
             boost::graph_traits<CausalizationGraph>::adjacency_iterator ai, ai_end;
             for(boost::tie(ai, ai_end) = boost::adjacent_vertices(ev, _graph); ai != ai_end; ++ai){
               UnknownVertex adj = *ai;
-              add_edge(newEquation, adj, _graph);
+              EdgeProperty ep;
+              ep.color = "red";
+              add_edge(newEquation, adj, ep, _graph);
               std::map<UnknownVertex,UnknownVertex>::iterator varMapIt = _varMap.find(adj);
               if (varMapIt != _varMap.end()){
-                UnknownVertex derAdj = varMapIt->second;
-                add_edge(newEquation, derAdj, _graph);
+                UnknownVertex derAdj = varMapIt->second;                
+                add_edge(newEquation, derAdj, ep, _graph);
               }
             }
           }
@@ -202,6 +205,8 @@ void Pantelides::ApplyPantelides(){
       }
     } while(!match);
   }
+  GraphPrinter<VertexProperty,EdgeProperty> gp(_graph);
+  gp.printGraph("graph_after_pantelides.dot");
 }
 
 bool Pantelides::MatchEquation(EquationVertex fVertex, std::set<Vertex> &coloured){

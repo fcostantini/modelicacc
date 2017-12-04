@@ -31,11 +31,32 @@
 #include <parser/parser.h>
 
 using namespace GiNaC;
-REGISTER_FUNCTION(der, dummy())
+
+//REGISTER_FUNCTION(der, dummy())
+//Rewrite derivatives
+
+REGISTER_FUNCTION(der3, dummy())
+
+static ex
+der2_derivative(const ex & x, const ex &y, unsigned diff_param)
+{
+  return der3(x);
+}
+
+REGISTER_FUNCTION(der2, derivative_func(der2_derivative))
+
+static ex
+der_derivative(const ex & x, const ex &y, unsigned diff_param)
+{
+  return der2(x, y);
+}
+
+REGISTER_FUNCTION(der, derivative_func(der_derivative))
+
 REGISTER_FUNCTION(pre, dummy())
 
 static ex var_derivative(const ex & x,const ex & y, unsigned diff_param) {
-  return der(x);
+  return der(x, y);
 }
 REGISTER_FUNCTION(var, derivative_func(var_derivative))
 
