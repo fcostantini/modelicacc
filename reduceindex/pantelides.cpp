@@ -182,7 +182,7 @@ void Pantelides::ApplyPantelides(){
               add_edge(newEquation, adj, ep, _graph);
               std::map<UnknownVertex,UnknownVertex>::iterator varMapIt = _varMap.find(adj);
               if (varMapIt != _varMap.end()){
-                UnknownVertex derAdj = varMapIt->second;                
+                UnknownVertex derAdj = varMapIt->second;
                 add_edge(newEquation, derAdj, ep, _graph);
               }
             }
@@ -205,8 +205,18 @@ void Pantelides::ApplyPantelides(){
       }
     } while(!match);
   }
+
   GraphPrinter<VertexProperty,EdgeProperty> gp(_graph);
   gp.printGraph("graph_after_pantelides.dot");
+
+  std::map<UnknownVertex, EquationVertex>::iterator assignIt;
+  std::cout << "Final assignation: \n";
+  for ( assignIt = _assign.begin(); assignIt != _assign.end(); assignIt++ ){
+    UnknownVertex unknown = assignIt -> first;
+    EquationVertex equation = assignIt -> second;
+    std::cout << _graph[unknown].unknown() << " -> " << _graph[equation].index+1 << "\n";
+  }
+
 }
 
 bool Pantelides::MatchEquation(EquationVertex fVertex, std::set<Vertex> &coloured){
