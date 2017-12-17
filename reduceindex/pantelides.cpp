@@ -265,10 +265,10 @@ void Pantelides::MakeGraphSets(){
 void Pantelides::InitializeVarMap(std::vector<std::pair<Expression, Expression>> expMap){
   for(auto uv : _unknownSet) {
     Unknown u = _graph[uv].unknown;
-    auto expMapIt = std::find_if( expMap.begin(), expMap.end(), [](const std::pair<Expression, Expression>& exp){ return exp.first == u.expression;} );
+    auto expMapIt = std::find_if( expMap.begin(), expMap.end(), [u](const std::pair<Expression, Expression>& exp){ return exp.first == u.expression;} );
     if(expMapIt != expMap.end()){
       Expression uDer = expMapIt->second;
-      auto unknownIt = std::find_if( _unknownSet.begin(), _unknownSet.end(), [](const UnknownVertex& uv){ return _graph[uv].unknown.expression == uDer;} );
+      auto unknownIt = std::find_if( _unknownSet.begin(), _unknownSet.end(), [this, uDer](const UnknownVertex& uv){ return _graph[uv].unknown.expression == uDer;} );
       if(unknownIt != _unknownSet.end()){
           UnknownVertex der = *unknownIt;
           _varMap[uv] = der;

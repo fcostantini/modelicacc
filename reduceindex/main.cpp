@@ -61,21 +61,21 @@ int main(int argc, char ** argv)
   }
 
   StoredDef sd;
-  if (argv[optind]!=NULL) 
+  if (argv[optind]!=NULL)
     sd=Parser::ParseFile(argv[optind],ret);
   else
     sd=Parser::ParseFile("",ret);
- 
-  if (!ret) 
+
+  if (!ret)
     return -1;
 
   Class ast_c = boost::get<Class>(sd.classes().front());
   MMO_Class mmo(ast_c);
 
   Pantelides pantelides(mmo); //this creates the graph
-  //cStrategy.Causalize();
+  pantelides.ApplyPantelides();
   DEBUG('c', "Equations after Pantelides:\n");
-  
+
   cout << mmo << endl;
   return 0;
 }

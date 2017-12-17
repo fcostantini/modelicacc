@@ -61,7 +61,7 @@ namespace Causalize {
     std::string color;
 
     friend std::ostream & operator << (std::ostream &os, const EdgeProperty &ep) {
-      os << color;
+      os << ep.color;
       return os;
     }
   };

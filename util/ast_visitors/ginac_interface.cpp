@@ -38,7 +38,7 @@ using namespace GiNaC;
 REGISTER_FUNCTION(der3, dummy())
 
 static ex
-der2_derivative(const ex & x, const ex &y, unsigned diff_param)
+der2_derivative(const ex & x, unsigned diff_param)
 {
   return der3(x);
 }
@@ -46,9 +46,9 @@ der2_derivative(const ex & x, const ex &y, unsigned diff_param)
 REGISTER_FUNCTION(der2, derivative_func(der2_derivative))
 
 static ex
-der_derivative(const ex & x, const ex &y, unsigned diff_param)
+der_derivative(const ex & x, unsigned diff_param)
 {
-  return der2(x, y);
+  return der2(x);
 }
 
 REGISTER_FUNCTION(der, derivative_func(der_derivative))
@@ -56,7 +56,7 @@ REGISTER_FUNCTION(der, derivative_func(der_derivative))
 REGISTER_FUNCTION(pre, dummy())
 
 static ex var_derivative(const ex & x,const ex & y, unsigned diff_param) {
-  return der(x, y);
+  return der(x);
 }
 REGISTER_FUNCTION(var, derivative_func(var_derivative))
 
@@ -180,9 +180,7 @@ ConvertToGiNaC::ConvertToGiNaC(VarSymbolTable  &var, bool forDerivation): varEnv
         ERROR_UNLESS(is<Reference>(arg),"Argument to der operator is not a reference\n");
         Reference r = get<Reference>(arg);
         GiNaC::ex exp = ConvertToGiNaC::operator()(r);
-        std::stringstream ss;
-        ss << "der(" << exp << ")";
-        return getSymbol(ss.str());
+        return der(exp);
       } 
       if ("exp"==v.name()) {
         return exp(ApplyThis(v.args()[0]));
