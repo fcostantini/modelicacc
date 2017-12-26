@@ -22,6 +22,7 @@
 
 #include <map>
 #include <ast/equation.h>
+#include <ast/expression.h>
 #include <causalize/graph/graph_definition.h>
 #include <causalize/causalization_strategy.h>
 #include <mmo/mmo_class.h>
@@ -37,7 +38,7 @@ private:
   bool MatchEquation(EquationVertex fVertex, std::set<Vertex> &coloured);
   void MakeGraphSets();
   void InitializeVarMap(std::vector<std::pair<Expression, Expression>> expMap);
-  
+
   std::set<UnknownVertex> _unknownSet;
   std::set<EquationVertex> _equationSet;
   std::map<UnknownVertex, UnknownVertex> _varMap; //var to derivated var

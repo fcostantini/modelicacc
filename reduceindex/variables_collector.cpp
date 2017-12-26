@@ -34,7 +34,7 @@ std::pair<ExpList, std::vector<std::pair<Expression, Expression>>> VariablesColl
   foreach_(VarSymbolTable::table_type::value_type val, _c.syms_ref()) {
     VarInfo varInfo = val.second;
     Name name = val.first;
-		if (!varInfo.builtin() && !isConstant(name,_c.syms_ref()) && !isDiscrete(name, _c.syms_ref()) && !isParameter(name,_c.syms_ref())) {
+    if (!varInfo.builtin() && !isConstant(name,_c.syms_ref()) && !isDiscrete(name, _c.syms_ref()) && !isParameter(name,_c.syms_ref())) {
       Option<Type::Type> opt_type =  _c.tyTable_ref()[varInfo.type()];
       ERROR_UNLESS((bool)opt_type, "No %s type found", varInfo.type().c_str());
       Type::Type type = opt_type.get();

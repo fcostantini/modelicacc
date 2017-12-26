@@ -27,6 +27,7 @@
 #include <util/derivate.h>
 #include <util/derivate_equality.h>
 #include <reduceindex/variables_collector.h>
+#include <reduceindex/simplify.h>
 #include <boost/lambda/lambda.hpp>
 #include <ast/equation.h>
 #include <boost/variant/get.hpp>
@@ -144,7 +145,10 @@ void Pantelides::ApplyPantelides(){
               //create new unknown
               VertexProperty vp;
               Unknown derUnknown = currentUnknown;
+              Modelica::SimplifyExpression se = Modelica::SimplifyExpression();
               derUnknown.expression = derivate(currentUnknown.expression, _mmo_class.syms_ref());
+              Expression simpleExpression = Apply(se, derUnknown.expression);
+              derUnknown.expression = simpleExpression;
               vp.unknown = derUnknown; //is this correct?
               vp.type = U;
               vp.index = _unknownIndex++;
@@ -164,7 +168,10 @@ void Pantelides::ApplyPantelides(){
             //create new unknown
             VertexProperty vp;
             Equality currentEquality = boost::get<Equality>(currentEquation);
+            Modelica::SimplifyEquation seq = Modelica::SimplifyEquation();
             vp.equation = derivate_equality(currentEquality, _mmo_class.syms_ref()); //is this correct?
+            Equation simpleEquation = Apply(seq, vp.equation);
+            vp.equation = simpleEquation;
             _mmo_class.equations_ref().addEquation(vp.equation);
             vp.type = E;
             vp.index = _equationIndex++;
@@ -276,5 +283,4 @@ void Pantelides::InitializeVarMap(std::vector<std::pair<Expression, Expression>>
     }
   }
 }
-
 }

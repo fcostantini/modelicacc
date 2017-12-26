@@ -30,9 +30,9 @@
 #include <util/table.h>
 
 DECLARE_FUNCTION_2P(var)
-DECLARE_FUNCTION_1P(der)
-//DECLARE_FUNCTION_2P (der)
-DECLARE_FUNCTION_1P (der2)
+//DECLARE_FUNCTION_1P(der)
+DECLARE_FUNCTION_2P (der)
+DECLARE_FUNCTION_2P (der2)
 DECLARE_FUNCTION_1P (der3)
 DECLARE_FUNCTION_1P(pre)
 
@@ -40,35 +40,35 @@ namespace Modelica {
   using namespace Modelica::AST;
   Expression ConvertToExp(GiNaC::ex e); 
   class ConvertToGiNaC: public boost::static_visitor<GiNaC::ex> {
-  public:
-  ConvertToGiNaC(VarSymbolTable  &varEnv,bool forDerivation=false);
-  ::GiNaC::ex operator()(Integer v) const;
-  ::GiNaC::ex operator()(Boolean v) const;
-  ::GiNaC::ex operator()(String v) const;
-  ::GiNaC::ex operator()(Name v) const;
-  ::GiNaC::ex operator()(Real v) const;
-  ::GiNaC::ex operator()(SubEnd v) const;
-  ::GiNaC::ex operator()(SubAll v) const;
-  ::GiNaC::ex operator()(BinOp) const;
-  ::GiNaC::ex operator()(UnaryOp) const;
-  ::GiNaC::ex operator()(Brace) const;
-  ::GiNaC::ex operator()(Bracket) const;
-  ::GiNaC::ex operator()(Call) const;
-  ::GiNaC::ex operator()(FunctionExp) const;
-  ::GiNaC::ex operator()(ForExp) const;
-  ::GiNaC::ex operator()(IfExp) const;
-  ::GiNaC::ex operator()(Named) const;
-  ::GiNaC::ex operator()(Output) const;
-  ::GiNaC::ex operator()(Reference) const;
-  ::GiNaC::ex operator()(Range) const;
+    public:
+      ConvertToGiNaC(VarSymbolTable  &varEnv,bool forDerivation=false);
+      ::GiNaC::ex operator()(Integer v) const;
+      ::GiNaC::ex operator()(Boolean v) const;
+      ::GiNaC::ex operator()(String v) const;
+      ::GiNaC::ex operator()(Name v) const;
+      ::GiNaC::ex operator()(Real v) const;
+      ::GiNaC::ex operator()(SubEnd v) const;
+      ::GiNaC::ex operator()(SubAll v) const;
+      ::GiNaC::ex operator()(BinOp) const;
+      ::GiNaC::ex operator()(UnaryOp) const;
+      ::GiNaC::ex operator()(Brace) const;
+      ::GiNaC::ex operator()(Bracket) const;
+      ::GiNaC::ex operator()(Call) const;
+      ::GiNaC::ex operator()(FunctionExp) const;
+      ::GiNaC::ex operator()(ForExp) const;
+      ::GiNaC::ex operator()(IfExp) const;
+      ::GiNaC::ex operator()(Named) const;
+      ::GiNaC::ex operator()(Output) const;
+      ::GiNaC::ex operator()(Reference) const;
+      ::GiNaC::ex operator()(Range) const;
 
-  ::GiNaC::symbol& getSymbol(Modelica::AST::Name) const;
-  ::GiNaC::symbol& getSymbol(Modelica::AST::Call);
-  ::GiNaC::symbol& getTime() const;
-  private:
-    mutable std::map<std::string, ::GiNaC::symbol> directory;
-    VarSymbolTable  &varEnv;
-    bool _forDerivation;
+      ::GiNaC::symbol& getSymbol(Modelica::AST::Name) const;
+      ::GiNaC::symbol& getSymbol(Modelica::AST::Call);
+      ::GiNaC::symbol& getTime() const;
+    private:
+      mutable std::map<std::string, ::GiNaC::symbol> directory;
+      VarSymbolTable  &varEnv;
+      bool _forDerivation;
   };
 }
 #endif

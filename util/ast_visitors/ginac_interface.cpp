@@ -46,9 +46,9 @@ der2_derivative(const ex & x, unsigned diff_param)
 REGISTER_FUNCTION(der2, derivative_func(der2_derivative))
 
 static ex
-der_derivative(const ex & x, unsigned diff_param)
+der_derivative(const ex & x, const ex &y, unsigned diff_param)
 {
-  return der2(x);
+  return der2(x, y);
 }
 
 REGISTER_FUNCTION(der, derivative_func(der_derivative))
@@ -56,7 +56,7 @@ REGISTER_FUNCTION(der, derivative_func(der_derivative))
 REGISTER_FUNCTION(pre, dummy())
 
 static ex var_derivative(const ex & x,const ex & y, unsigned diff_param) {
-  return der(x);
+  return der(x, y);
 }
 REGISTER_FUNCTION(var, derivative_func(var_derivative))
 
@@ -168,34 +168,45 @@ ConvertToGiNaC::ConvertToGiNaC(VarSymbolTable  &var, bool forDerivation): varEnv
     GiNaC::ex ConvertToGiNaC::operator()(Call v) const { 
       if ("sin"==v.name()) {
         return sin(ApplyThis(v.args()[0]));
-      } 
+      }
       if ("cos"==v.name()) {
         return cos(ApplyThis(v.args()[0]));
-      } 
+      }
       if ("pre"==v.name()) {
         return ApplyThis(v.args()[0]);
-      } 
+      }
       if ("der"==v.name()) {
         Expression arg = v.args().front();
         ERROR_UNLESS(is<Reference>(arg),"Argument to der operator is not a reference\n");
         Reference r = get<Reference>(arg);
         GiNaC::ex exp = ConvertToGiNaC::operator()(r);
-        return der(exp);
-      } 
+        std::stringstream ss;
+        ss << "der(" << exp << ")";
+        return der(getSymbol(ss.str()), getTime());
+      }
+      if ("der2"==v.name()) {
+        Expression arg = v.args().front();
+        ERROR_UNLESS(is<Reference>(arg),"Argument to der2 operator is not a reference\n");
+        Reference r = get<Reference>(arg);
+        GiNaC::ex exp = ConvertToGiNaC::operator()(r);
+        std::stringstream ss;
+        ss << "der2(" << exp << ")";
+        return der2(getSymbol(ss.str()), getTime());
+      }
       if ("exp"==v.name()) {
         return exp(ApplyThis(v.args()[0]));
-      } 
+      }
       if ("sum"==v.name()) {
         std::stringstream ss;
         ss << v;
         return getSymbol(ss.str());
-      } 
+      }
       if ("log"==v.name()) {
         return log(ApplyThis(v.args()[0]));
-      } 
+      }
       if ("log10"==v.name()) {
         return log(ApplyThis(v.args()[0]))/log(10);
-      } 
+      }
       WARNING("ConvertToGiNaC: conversion of function %s implemented. Returning 0.\n", v.name().c_str());
       return 0;
     }
@@ -256,7 +267,7 @@ ConvertToGiNaC::ConvertToGiNaC(VarSymbolTable  &var, bool forDerivation): varEnv
         return i->second;
       return directory.insert(make_pair(s, symbol(s))).first->second;
     }
-    
+
     Expression ConvertToExp(GiNaC::ex e) {
       bool r;
       std::stringstream s(std::ios_base::out),der_s(std::ios_base::out);
@@ -266,7 +277,7 @@ ConvertToGiNaC::ConvertToGiNaC(VarSymbolTable  &var, bool forDerivation): varEnv
       if (!r) {
         WARNING("ConvertToGiNaC: conversion of output expression. Returning 0");
         return 0;
-      } 
+      }
       return exp;
     }
 
