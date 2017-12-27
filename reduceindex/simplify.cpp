@@ -45,11 +45,13 @@ namespace Modelica {
     Expression SimplifyExpression::operator()(SubAll v) const { 
       return v;
     }
-    Expression SimplifyExpression::operator()(BinOp v) const { 
-      return v;
+    Expression SimplifyExpression::operator()(BinOp v) const {
+      Expression l=v.left(), r=v.right();
+      return BinOp(ApplyThis(l), v.op(), ApplyThis(r));
     } 
     Expression SimplifyExpression::operator()(UnaryOp v) const { 
-      return v;
+      Expression exp = v.exp();
+      return UnaryOp(ApplyThis(exp),v.op());
     } 
     Expression SimplifyExpression::operator()(IfExp v) const { 
       return v;
@@ -64,9 +66,22 @@ namespace Modelica {
       return v;
     }
     Expression SimplifyExpression::operator()(Call v) const {
-      if ("der"==v.name()) {
-        std::cout << "Simplify der...\n";
+      if(boost::algorithm::starts_with(v.name(), "der")){
+        ExpList args = v.args();
+        Expression firstArg = args.front();
+        if(is<Call>(firstArg)){
+          Call c = get<Call>(firstArg);
+          if(c.name() == "var") //dern(var(x, time))
+            return Call(v.name(), c.args().front()); //dern(x)
+          if(boost::algorithm::starts_with(c.name(), "der")){
+            Expression newC = ApplyThis(firstArg);
+            Call nc = get<Call>(newC);
+            return Call(v.name(), nc.args().front());
+          }
+        }
+        return Call(v.name(), firstArg); //Remove time if it exists
       }
+
       return v;
     }
     Expression SimplifyExpression::operator()(FunctionExp v) const { 
