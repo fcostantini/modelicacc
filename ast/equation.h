@@ -251,6 +251,7 @@ namespace Modelica {
       member_(bool, initial);
       printable(EquationSection);
       void addEquation(Equation e) { equations_.push_back(e); }
+      void eraseEquation(Equation e) { equations_.erase(std::remove_if(equations_.begin(), equations_.end(), [e](Equation x){return x == e;})); }
     };
   }
 }

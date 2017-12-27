@@ -147,12 +147,11 @@ void Pantelides::ApplyPantelides(){
               Unknown derUnknown = currentUnknown;
               Modelica::SimplifyExpression se = Modelica::SimplifyExpression();
               derUnknown.expression = derivate(currentUnknown.expression, _mmo_class.syms_ref());
-              Expression simpleExpression = Apply(se, derUnknown.expression);
-              derUnknown.expression = simpleExpression;
-              vp.unknown = derUnknown; //is this correct?
+              Expression simplifiedExpression = Apply(se, derUnknown.expression);
+              derUnknown.expression = simplifiedExpression;
+              vp.unknown = derUnknown;
               vp.type = U;
               vp.index = _unknownIndex++;
-              //vp.visited = false; //does this matter?
               Vertex newUnknown = add_vertex(vp, _graph);
 
               _unknownSet.insert(newUnknown);
@@ -169,13 +168,15 @@ void Pantelides::ApplyPantelides(){
             VertexProperty vp;
             Equality currentEquality = boost::get<Equality>(currentEquation);
             Modelica::SimplifyEquation seq = Modelica::SimplifyEquation();
-            vp.equation = derivate_equality(currentEquality, _mmo_class.syms_ref()); //is this correct?
-            Equation simpleEquation = Apply(seq, vp.equation);
-            vp.equation = simpleEquation;
-            _mmo_class.equations_ref().addEquation(vp.equation);
+            _mmo_class.addInitEquation(currentEquality); //Add current equation to initial equations
+            _mmo_class.equations_ref().erase(std::remove_if(_mmo_class.equations_ref().begin(), _mmo_class.equations_ref().end(), [](Equation x){return x == currentEquality;})); //Remove current equation
+            vp.equation = derivate_equality(currentEquality, _mmo_class.syms_ref());
+            Equation simplifiedEquation = Apply(seq, vp.equation);
+            vp.equation = simplifiedEquation;
+            _mmo_class.addEquation(vp.equation); //Add derivated equation
+
             vp.type = E;
             vp.index = _equationIndex++;
-            //vp.visited = false; //does this matter?
             Vertex newEquation = add_vertex(vp, _graph);
 
             _equationSet.insert(newEquation);

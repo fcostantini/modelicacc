@@ -28,7 +28,7 @@ namespace Modelica {
   MMO_Class::MMO_Class(){father_ = NULL;}
   MMO_Class::MMO_Class(Class &c): variables_() {
     using namespace boost;
-    
+
     equations_.set_initial(false);
     statements_.set_initial(false);
     initial_eqs_.set_initial(true);
@@ -44,7 +44,7 @@ namespace Modelica {
     }
     foreach_(Element ce, c.composition().elements())
 		  insertElement(ce);
-    foreach_(Element ce, c.composition().elements()) { 
+    foreach_(Element ce, c.composition().elements()) {
       if (is<Component>(ce)) {
         Component comp = boost::get<Component>(ce);
         foreach_ (Declaration d, comp.declarations()) {
@@ -60,10 +60,10 @@ namespace Modelica {
           }
         }
       }
-      
+
 
     }
-		
+
     foreach_(CompElement ce, c.composition().comp_elem()) {
       if (is<EquationSection>(ce)) {
         EquationSection eqs = boost::get<EquationSection>(ce);
@@ -83,15 +83,15 @@ namespace Modelica {
         }
       } else if (is<Public>(ce)) {
 		Public pub = boost::get<Public>(ce);
-        foreach_(Element e, pub) 
+        foreach_(Element e, pub)
 			insertElement(e);
 	  } else if (is<Protected>(ce)) {
 		Protected piv = boost::get<Protected>(ce);
-        foreach_(Element e, piv) 
+        foreach_(Element e, piv)
 			insertElement(e);
 	  }
-    }   
-     
+    }
+
   }
 
   std::ostream& operator<<(std::ostream& out, const MMO_Class &c) {
@@ -101,23 +101,23 @@ namespace Modelica {
       out << classPrefix(cp);
     out << c.name() <<  "\n";
     BEGIN_BLOCK;
-    
-    foreach_(Import n, c.imports()) 
+
+    foreach_(Import n, c.imports())
 		out << INDENT << n << ";\n";
-		
-    foreach_(Extends n, c.extends()) 
+
+    foreach_(Extends n, c.extends())
 		out << INDENT << n << ";\n";
-		
+
     foreach_(Name n, c.types()) {
 		Option<Type::Type> t = tipos[n];
-		if (t) 
+		if (t)
 			out << INDENT << (t.get()) << std::endl ;
 	}
-	
+
     foreach_(Name n, c.variables()) {
       VarInfo vinfo = table[n].get();
       out << INDENT;
-      foreach_(Option<TypePrefix> tp, vinfo.prefixes()) 
+      foreach_(Option<TypePrefix> tp, vinfo.prefixes())
         out << typePrefix(tp);
       out <<  vinfo.type() << " " << n;
       if (vinfo.indices()) {
@@ -132,7 +132,7 @@ namespace Modelica {
         out << vinfo.modification().get();
       out <<  ";\n";
     }
-    
+
     out << c.initial_eqs();
     out << c.initial_sts();
     out << c.equations();
@@ -144,7 +144,7 @@ namespace Modelica {
         out << " " << c.language().get() << " ";
       if (c.external()) {
         External e = c.external().get();
-        if (e.comp_ref()) 
+        if (e.comp_ref())
           out << e.comp_ref().get() << " =";
         out << " " << e.fun() << "(";
         unsigned int i=0;
@@ -158,12 +158,12 @@ namespace Modelica {
       }
       out << ";\n";
     }
-    if (c.annotation())  
+    if (c.annotation())
       out << c.annotation().get() << ";\n";
     out << INDENT<<  "end " << c.name() << ";";
     return out;
   }
-  
+
   member_imp(MMO_Class,std::vector<Name>, variables);
   member_imp(MMO_Class,std::vector<Name>,  types);
   member_imp(MMO_Class,EquationSection, equations);
@@ -177,26 +177,28 @@ namespace Modelica {
   member_imp(MMO_Class,Option<External>,external);
   member_imp(MMO_Class,Option<Annotation>,external_annot);
   member_imp(MMO_Class,Option<String>,language);
- 
+
   member_imp(MMO_Class,VarSymbolTable,syms);
   member_imp(MMO_Class,TypeSymbolTable,tyTable);
   member_imp(MMO_Class,ClassPrefixes,prefixes);
   member_imp(MMO_Class,ExtendList,extends);
   member_imp(MMO_Class,ImportList,imports);
   member_imp(MMO_Class,MMO_Class *,father);
-  
-  bool MMO_Class::isConnector() 
+
+  bool MMO_Class::isConnector()
   {
-	  foreach_(Option<ClassPrefix> cp, prefixes()) 
+	  foreach_(Option<ClassPrefix> cp, prefixes())
 		  if (cp && (cp.get() == connector)) return true;
 	  return false;
   }
-  
+
   void MMO_Class::addEquation(Equation e) { equations_.addEquation(e); }
   void MMO_Class::addInitEquation(Equation e) {initial_eqs_.addEquation(e);}
+  void MMO_Class::eraseEquation(Equation e) { equations_.eraseEquation(e); }
+  void MMO_Class::eraseInitEquation(Equation e) {initial_eqs_.eraseEquation(e);}
   void MMO_Class::addStatement(Statement e) {statements_.addStatement(e); }
   void MMO_Class::addInitStatement(Statement e) { initial_sts_.addStatement(e); }
-  
+
   void MMO_Class::insertElement(Element e)
   {
 	  if (is<Component>(e)) {
@@ -207,15 +209,15 @@ namespace Modelica {
           Option<ExpList> ind;
           if (comp.indices()) exp += comp.indices().get();
           if (d.indices()) exp += d.indices().get();
-          if (exp.size() > 0) 
-			    ind = exp;		  
+          if (exp.size() > 0)
+			    ind = exp;
           syms_.insert(d.name(),VarInfo(comp.prefixes(),comp.type(),d.comment(),d.modification(),ind,false));
         }
       } else if (is<Extends>(e)) {
-		extends_.push_back(boost::get<Extends>(e));		
+		extends_.push_back(boost::get<Extends>(e));
 	  } else if (is<Import>(e)) {
-		imports_.push_back(boost::get<Import>(e));	
-	  } else if (is<ElemClass>(e)) {		  
+		imports_.push_back(boost::get<Import>(e));
+	  } else if (is<ElemClass>(e)) {
 		  ElemClass c = boost::get<ElemClass>(e);
 		  ClassType ct = c.class_element().get().cl();
 		  if (is<Class>(ct)) {
@@ -238,12 +240,12 @@ namespace Modelica {
 		  }
 	  }
   }
-  
+
   void MMO_Class::addVar(Name n , VarInfo var)
   {
 	  syms_.insert(n,var);
   }
-  
+
   Option<VarInfo> MMO_Class::getVar(Name n)
   {
 	  Option<VarInfo>  v = syms_[n];
@@ -251,7 +253,7 @@ namespace Modelica {
 	  else if (father_) return father_->getVar(n);
 	  else return Option<VarInfo>();
   }
-  
+
   bool MMO_Class::isLocal(Name n)
   {
 	  foreach_(Name m, variables()) {
@@ -259,7 +261,7 @@ namespace Modelica {
 	  }
 	  return false;
   }
-  
+
 };
 
 

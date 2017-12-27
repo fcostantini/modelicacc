@@ -49,7 +49,7 @@ namespace Modelica {
     Expression operator()(Reference) const;
     Expression operator()(Range) const;
   };
-  
+
   class SimplifyEquation: public boost::static_visitor<Equation> {
   public:
     SimplifyEquation();

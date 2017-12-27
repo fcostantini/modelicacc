@@ -40,26 +40,28 @@ struct MMO_Class {
   member_(EquationSection, equations);
   member_(StatementSection, initial_sts);
   member_(StatementSection, statements);
-  
+
   member_(Option<Annotation>,annotation);
   member_(Option<Annotation>,external_annot);
   member_(Option<String>,language);
   member_(Option<External>,external);
-  
+
   member_(VarSymbolTable,syms);
   member_(TypeSymbolTable,tyTable);
   member_(std::vector<Name>, variables);
   member_(std::vector<Name>, types);
-  
+
   printable(MMO_Class);
   bool isConnector();	
   void insertElement(Element);
-  
+
   void addEquation(Equation);
   void addInitEquation(Equation);
+  void eraseEquation(Equation);
+  void eraseInitEquation(Equation);
   void addStatement(Statement);
   void addInitStatement(Statement);
-  
+
   member_(ExtendList,extends);
   member_(ImportList,imports);
   member_(MMO_Class *,father);
@@ -67,7 +69,7 @@ struct MMO_Class {
   Option<VarInfo> getVar(Name n);
   bool isLocal(Name n);
 
-  
+
 };
 }
 #endif

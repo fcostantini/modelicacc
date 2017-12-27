@@ -94,14 +94,14 @@ void my_print_add_dflt(const add & s, const print_dflt & c, unsigned level) {
 }
 */
 namespace Modelica {
-  
+
     using namespace GiNaC;
 ConvertToGiNaC::ConvertToGiNaC(VarSymbolTable  &var, bool forDerivation): varEnv(var),_forDerivation(forDerivation) {}
 
-    GiNaC::ex ConvertToGiNaC::operator()(Integer v) const { 
+    GiNaC::ex ConvertToGiNaC::operator()(Integer v) const {
       return ex(v);
     }
-    GiNaC::ex ConvertToGiNaC::operator()(Boolean v) const { 
+    GiNaC::ex ConvertToGiNaC::operator()(Boolean v) const {
       WARNING("ConvertToGiNaC: conversion not implemented. Returning 0");
       return 0;
     }
@@ -109,22 +109,22 @@ ConvertToGiNaC::ConvertToGiNaC(VarSymbolTable  &var, bool forDerivation): varEnv
       WARNING("ConvertToGiNaC: conversion not implemented. Returning 0");
       return 0;
     }
-    GiNaC::ex ConvertToGiNaC::operator()(Name v) const { 
+    GiNaC::ex ConvertToGiNaC::operator()(Name v) const {
       WARNING("ConvertToGiNaC: conversion not implemented. Returning 0");
       return 0;
     }
-    GiNaC::ex ConvertToGiNaC::operator()(Real v) const { 
+    GiNaC::ex ConvertToGiNaC::operator()(Real v) const {
       return ex(v);
     }
-    GiNaC::ex ConvertToGiNaC::operator()(SubEnd v) const { 
+    GiNaC::ex ConvertToGiNaC::operator()(SubEnd v) const {
       WARNING("ConvertToGiNaC: conversion not implemented. Returning 0");
       return 0;
     }
-    GiNaC::ex ConvertToGiNaC::operator()(SubAll v) const { 
+    GiNaC::ex ConvertToGiNaC::operator()(SubAll v) const {
       WARNING("ConvertToGiNaC: conversion not implemented. Returning 0");
       return 0;
     }
-    GiNaC::ex ConvertToGiNaC::operator()(BinOp v) const { 
+    GiNaC::ex ConvertToGiNaC::operator()(BinOp v) const {
       Expression l=v.left(),r=v.right();
       switch (v.op()) {
         case Add:
@@ -141,31 +141,31 @@ ConvertToGiNaC::ConvertToGiNaC(VarSymbolTable  &var, bool forDerivation): varEnv
           WARNING("ConvertToGiNaC: BinOp conversion not implemented. Returning 0");
           return 0;
       }
-    } 
-    GiNaC::ex ConvertToGiNaC::operator()(UnaryOp v) const { 
+    }
+    GiNaC::ex ConvertToGiNaC::operator()(UnaryOp v) const {
       Expression e=v.exp();
-      if (v.op()==Minus) 
+      if (v.op()==Minus)
         return -ApplyThis(e);
       WARNING("ConvertToGiNaC: Not conversion not implemented. Returning 0");
       return 0;
-    } 
-    GiNaC::ex ConvertToGiNaC::operator()(IfExp v) const { 
+    }
+    GiNaC::ex ConvertToGiNaC::operator()(IfExp v) const {
       WARNING("ConvertToGiNaC: IfExp conversion not implemented. Returning 0");
       return 0;
     }
-    GiNaC::ex ConvertToGiNaC::operator()(Range v) const { 
+    GiNaC::ex ConvertToGiNaC::operator()(Range v) const {
       WARNING("ConvertToGiNaC: conversion not implemented. Returning 0");
       return 0;
     }
-    GiNaC::ex ConvertToGiNaC::operator()(Brace v) const { 
+    GiNaC::ex ConvertToGiNaC::operator()(Brace v) const {
       WARNING("ConvertToGiNaC: conversion not implemented. Returning 0");
       return 0;
     }
-    GiNaC::ex ConvertToGiNaC::operator()(Bracket v) const { 
+    GiNaC::ex ConvertToGiNaC::operator()(Bracket v) const {
       WARNING("ConvertToGiNaC: conversion not implemented. Returning 0");
       return 0;
     }
-    GiNaC::ex ConvertToGiNaC::operator()(Call v) const { 
+    GiNaC::ex ConvertToGiNaC::operator()(Call v) const {
       if ("sin"==v.name()) {
         return sin(ApplyThis(v.args()[0]));
       }
@@ -210,7 +210,7 @@ ConvertToGiNaC::ConvertToGiNaC(VarSymbolTable  &var, bool forDerivation): varEnv
       WARNING("ConvertToGiNaC: conversion of function %s implemented. Returning 0.\n", v.name().c_str());
       return 0;
     }
-    GiNaC::ex ConvertToGiNaC::operator()(FunctionExp v) const { 
+    GiNaC::ex ConvertToGiNaC::operator()(FunctionExp v) const {
       WARNING("ConvertToGiNaC: conversion not implemented. Returning 0");
       return 0;
     }
@@ -243,7 +243,7 @@ ConvertToGiNaC::ConvertToGiNaC(VarSymbolTable  &var, bool forDerivation): varEnv
           return getSymbol(ss.str());
         } else if (oel && oel.get().size()>1) {
           ERROR("Multidimensional array not supported");
-        } 
+        }
         return getSymbol(s);
       } else if (_forDerivation) {
           return var(getSymbol(s),ConvertToGiNaC::getTime());

@@ -24,45 +24,45 @@ namespace Modelica {
 
     using namespace boost;
     SimplifyExpression::SimplifyExpression(){};
-    Expression SimplifyExpression::operator()(Integer v) const { 
+    Expression SimplifyExpression::operator()(Integer v) const {
       return v;
     }
-    Expression SimplifyExpression::operator()(Boolean v) const { 
+    Expression SimplifyExpression::operator()(Boolean v) const {
       return v;
     }
     Expression SimplifyExpression::operator()(String v) const {
       return v;
     }
-    Expression SimplifyExpression::operator()(Name v) const { 
+    Expression SimplifyExpression::operator()(Name v) const {
       return v;
     }
-    Expression SimplifyExpression::operator()(Real v) const { 
+    Expression SimplifyExpression::operator()(Real v) const {
       return v;
     }
-    Expression SimplifyExpression::operator()(SubEnd v) const { 
+    Expression SimplifyExpression::operator()(SubEnd v) const {
       return v;
     }
-    Expression SimplifyExpression::operator()(SubAll v) const { 
+    Expression SimplifyExpression::operator()(SubAll v) const {
       return v;
     }
     Expression SimplifyExpression::operator()(BinOp v) const {
       Expression l=v.left(), r=v.right();
       return BinOp(ApplyThis(l), v.op(), ApplyThis(r));
-    } 
-    Expression SimplifyExpression::operator()(UnaryOp v) const { 
+    }
+    Expression SimplifyExpression::operator()(UnaryOp v) const {
       Expression exp = v.exp();
       return UnaryOp(ApplyThis(exp),v.op());
-    } 
-    Expression SimplifyExpression::operator()(IfExp v) const { 
+    }
+    Expression SimplifyExpression::operator()(IfExp v) const {
       return v;
     }
-    Expression SimplifyExpression::operator()(Range v) const { 
+    Expression SimplifyExpression::operator()(Range v) const {
       return v;
     }
-    Expression SimplifyExpression::operator()(Brace v) const { 
+    Expression SimplifyExpression::operator()(Brace v) const {
       return v;
     }
-    Expression SimplifyExpression::operator()(Bracket v) const { 
+    Expression SimplifyExpression::operator()(Bracket v) const {
       return v;
     }
     Expression SimplifyExpression::operator()(Call v) const {
@@ -84,7 +84,7 @@ namespace Modelica {
 
       return v;
     }
-    Expression SimplifyExpression::operator()(FunctionExp v) const { 
+    Expression SimplifyExpression::operator()(FunctionExp v) const {
       return v;
     }
     Expression SimplifyExpression::operator()(ForExp v) const {
