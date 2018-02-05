@@ -38,6 +38,7 @@ private:
   bool MatchEquation(EquationVertex fVertex, std::set<Vertex> &coloured);
   void MakeGraphSets();
   void InitializeVarMap(std::vector<std::pair<Expression, Expression>> expMap);
+  void ReplaceDerivatives(EquatiobVertex eqVertex);
 
   std::set<UnknownVertex> _unknownSet;
   std::set<EquationVertex> _equationSet;

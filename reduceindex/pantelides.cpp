@@ -95,7 +95,6 @@ Pantelides::Pantelides(MMO_Class &mmo_class): Causalize::CausalizationStrategy(m
 
   DEBUG('c', "Graph edges as (equation_index, unknown_index):\n");
 
-  list<Vertex>::iterator acausalEqsIter, unknownsIter;
   foreach_(Vertex eqVertex, eqVerts) {
     foreach_(Vertex unknownVertex , unknownVerts) {
       Modelica::ContainsExpression occurrs(_graph[unknownVertex].unknown());
@@ -145,9 +144,9 @@ void Pantelides::ApplyPantelides(){
               //create new unknown
               VertexProperty vp;
               Unknown derUnknown = currentUnknown;
-              Modelica::SimplifyExpression se = Modelica::SimplifyExpression();
+              //Modelica::SimplifyExpression se = Modelica::SimplifyExpression();
               derUnknown.expression = derivate(currentUnknown.expression, _mmo_class.syms_ref());
-              Expression simplifiedExpression = Apply(se, derUnknown.expression);
+              //Expression simplifiedExpression = Apply(se, derUnknown.expression);
               derUnknown.expression = simplifiedExpression;
               vp.unknown = derUnknown;
               vp.type = U;
@@ -164,15 +163,15 @@ void Pantelides::ApplyPantelides(){
           if (it != _equationSet.end()) {
             EquationVertex ev = *it;
             Equation currentEquation = _graph[ev].equation;
-            //create new unknown
+            //create new equation
             VertexProperty vp;
             Equality currentEquality = boost::get<Equality>(currentEquation);
-            Modelica::SimplifyEquation seq = Modelica::SimplifyEquation();
+            //Modelica::SimplifyEquation seq = Modelica::SimplifyEquation();
             _mmo_class.addInitEquation(currentEquality); //Add current equation to initial equations
             _mmo_class.equations_ref().erase(std::remove_if(_mmo_class.equations_ref().begin(), _mmo_class.equations_ref().end(), [](Equation x){return x == currentEquality;})); //Remove current equation
             vp.equation = derivate_equality(currentEquality, _mmo_class.syms_ref());
-            Equation simplifiedEquation = Apply(seq, vp.equation);
-            vp.equation = simplifiedEquation;
+            //Equation simplifiedEquation = Apply(seq, vp.equation);
+            //vp.equation = simplifiedEquation;
             _mmo_class.addEquation(vp.equation); //Add derivated equation
 
             vp.type = E;
@@ -194,6 +193,7 @@ void Pantelides::ApplyPantelides(){
                 add_edge(newEquation, derAdj, ep, _graph);
               }
             }
+            ReplaceDerivatives(newEquation);
           }
         }
 
@@ -283,5 +283,48 @@ void Pantelides::InitializeVarMap(std::vector<std::pair<Expression, Expression>>
       }
     }
   }
+}
+
+//#define NameToRef(X)  	Ref(1,RefTuple(X,ExpList(0)))
+//Reference::Reference(Name n): ref_(Ref(1,RefTuple(n,ExpList(0)))) { }
+
+//Modelica::ReplaceExpression r = Modelica::ReplaceExpression(NameToRef(name.get()), NameToRef("i"));
+//				eleft = Apply(r,eleft);
+//				eright = Apply(r,eright);
+
+void ReplaceDerivatives(EquationVertex eqVertex){
+    Equation originalEquation = _graph[eqVertex].equation;
+    // Reference(Ref(1,RefTuple(name,ExpList(0))));
+    // Expression derVar = Call("der",ExpList(1,Reference(Ref(1,RefTuple(name,ExpList(0))))));
+    //Find derivatives
+    Modelica::DerivedNames derNames = Modelica::DerivedNames();
+    std::set<Name> toDerivate = Apply(derNames, originalEquation);
+    //For each derivative
+    for(Name name : toDerivate){
+        std::string der("der");
+        Name newName = name.insert(0, der);
+        Expression oldExp = Call("der", ExpList(1, Reference(name)));
+        Expression newExp = Reference(newName);
+        //Replace with new var in this equation
+        Modelica::ReplaceEquation r = Modelica::ReplaceEquation(oldExp, newExp);
+        //For each equation
+        foreach_(Equation e, mmo_class.equations_ref().equations_ref()){
+            //Replace with new var
+            Equation newEquation = Apply(r, e);
+            if(newEquation != e){
+                _mmo_class.equations_ref().erase(std::remove_if(_mmo_class.equations_ref().begin(), _mmo_class.equations_ref().end(), [](Equation x){return x == e;})); //Remove current equation
+                _mmo_class.addEquation(newEquation); //Add derivated equation
+                _graph[eqVertex].equation = newEquation;
+            }
+        }
+        //Add equation for derivative
+        Equation derDefinition = Equality(oldExp, newExp);
+        _mmo_class.addEquation(derDefinition);
+        //Add unknown definition
+        VarInfo v(TypePrefixes(),"Real");
+        mmo_class.addVar(newName, v);
+    }
+
+
 }
 }

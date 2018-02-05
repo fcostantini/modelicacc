@@ -3,6 +3,7 @@ SRC_REDUCEINDEX := reduceindex/main.cpp \
                    reduceindex/pantelides.cpp \
                    reduceindex/variables_collector.cpp \
                    reduceindex/simplify.cpp \
+                   reduceindex/derived_names.cpp \
                    util/debug.cpp \
                    util/table.cpp \
                    util/type.cpp \

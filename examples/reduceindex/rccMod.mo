@@ -1,11 +1,11 @@
-model rlc_total
+model rcc_total
   parameter Real c1=1;
   parameter Real c2=2;
-  Real u1;
-  Real i1;
-  Real i2;
-  Real u2;
-  Real i0;
+  Real i1(start=1);
+  Real u1(start=1);
+  Real u2(start=1);
+  Real i0(start=1);
+  Real i2(start=1);
   parameter Real R=1;
   parameter Real u0=1;
 equation

@@ -244,6 +244,7 @@ namespace Modelica {
   void MMO_Class::addVar(Name n , VarInfo var)
   {
 	  syms_.insert(n,var);
+          variables_.push_back(n);
   }
 
   Option<VarInfo> MMO_Class::getVar(Name n)
