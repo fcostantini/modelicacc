@@ -14,5 +14,4 @@ equation
   u1 = u2;
   i0+i1+i2 = 0;
   u0 = R*i0+u1;
-  der(u1,time) = der(u2,time);
 end rlc_total;

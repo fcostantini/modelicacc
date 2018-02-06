@@ -15,6 +15,8 @@ SRC_REDUCEINDEX := reduceindex/main.cpp \
                    util/ast_visitors/ginac_interface.cpp \
                    util/ast_visitors/contains_expression.cpp \
                    util/ast_visitors/splitfor_visitor.cpp \
+                   util/ast_visitors/replace_equation.cpp \
+                   util/ast_visitors/replace_expression.cpp \
                    causalize/for_unrolling/for_index_iterator.cpp \
                    causalize/apply_tarjan.cpp \
                    causalize/for_unrolling/process_for_equations.cpp \

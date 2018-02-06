@@ -28,12 +28,14 @@
 #include <util/derivate_equality.h>
 #include <reduceindex/variables_collector.h>
 #include <reduceindex/simplify.h>
+#include <reduceindex/derived_names.h>
 #include <boost/lambda/lambda.hpp>
 #include <ast/equation.h>
 #include <boost/variant/get.hpp>
 #include <mmo/mmo_class.h>
 #include <util/ast_visitors/contains_expression.h>
 #include <util/ast_visitors/partial_eval_expression.h>
+#include <util/ast_visitors/replace_equation.h>
 #include <util/solve/solve.h>
 #include <fstream>
 
@@ -125,14 +127,6 @@ void Pantelides::ApplyPantelides(){
     EquationVertex fVertex = eq;
     bool match;
     do {
-//      //search for the node corresponding to the equation f (it should exist obviously)
-//      EquationVertex fVertex;
-//      for(EquationVertex eqV : equationSet){
-//        if(_graph[eqV].equation == f){
-//          fVertex = eqV;
-//          break;
-//        }
-//      }
       std::set<Vertex> coloured;
       match = MatchEquation(fVertex, coloured);
       if(!match){
@@ -141,20 +135,17 @@ void Pantelides::ApplyPantelides(){
           if (it != _unknownSet.end()) {
               UnknownVertex uv = *it;
               Unknown currentUnknown = _graph[uv].unknown;
-              //create new unknown
+              //Create new unknown
               VertexProperty vp;
               Unknown derUnknown = currentUnknown;
-              //Modelica::SimplifyExpression se = Modelica::SimplifyExpression();
               derUnknown.expression = derivate(currentUnknown.expression, _mmo_class.syms_ref());
-              //Expression simplifiedExpression = Apply(se, derUnknown.expression);
-              derUnknown.expression = simplifiedExpression;
               vp.unknown = derUnknown;
               vp.type = U;
               vp.index = _unknownIndex++;
               Vertex newUnknown = add_vertex(vp, _graph);
 
               _unknownSet.insert(newUnknown);
-              _varMap[uv] = newUnknown;//.push_back(std::make_pair(currentUnknown, vp.unknown));
+              _varMap[uv] = newUnknown;
           }
         }
 
@@ -166,12 +157,9 @@ void Pantelides::ApplyPantelides(){
             //create new equation
             VertexProperty vp;
             Equality currentEquality = boost::get<Equality>(currentEquation);
-            //Modelica::SimplifyEquation seq = Modelica::SimplifyEquation();
+            _mmo_class.equations_ref().eraseEquation(currentEquality); //Remove current equation from equations
             _mmo_class.addInitEquation(currentEquality); //Add current equation to initial equations
-            _mmo_class.equations_ref().erase(std::remove_if(_mmo_class.equations_ref().begin(), _mmo_class.equations_ref().end(), [](Equation x){return x == currentEquality;})); //Remove current equation
             vp.equation = derivate_equality(currentEquality, _mmo_class.syms_ref());
-            //Equation simplifiedEquation = Apply(seq, vp.equation);
-            //vp.equation = simplifiedEquation;
             _mmo_class.addEquation(vp.equation); //Add derivated equation
 
             vp.type = E;
@@ -179,7 +167,7 @@ void Pantelides::ApplyPantelides(){
             Vertex newEquation = add_vertex(vp, _graph);
 
             _equationSet.insert(newEquation);
-            _eqMap[ev] = newEquation; //.push_back(std::make_pair(currentEquation, vp.equation));
+            _eqMap[ev] = newEquation;
 
             boost::graph_traits<CausalizationGraph>::adjacency_iterator ai, ai_end;
             for(boost::tie(ai, ai_end) = boost::adjacent_vertices(ev, _graph); ai != ai_end; ++ai){
@@ -218,11 +206,13 @@ void Pantelides::ApplyPantelides(){
   gp.printGraph("graph_after_pantelides.dot");
 
   std::map<UnknownVertex, EquationVertex>::iterator assignIt;
-  std::cout << "Final assignation: \n";
-  for ( assignIt = _assign.begin(); assignIt != _assign.end(); assignIt++ ){
-    UnknownVertex unknown = assignIt -> first;
-    EquationVertex equation = assignIt -> second;
-    std::cout << _graph[unknown].unknown() << " -> " << _graph[equation].index+1 << "\n";
+  if (debugIsEnabled('c')){
+    std::cout << "Final assignation: \n";
+    for ( assignIt = _assign.begin(); assignIt != _assign.end(); assignIt++ ){
+      UnknownVertex unknown = assignIt -> first;
+      EquationVertex equation = assignIt -> second;
+      std::cout << _graph[unknown].unknown() << " -> " << _graph[equation].index+1 << "\n";
+    }
   }
 
 }
@@ -234,7 +224,7 @@ bool Pantelides::MatchEquation(EquationVertex fVertex, std::set<Vertex> &coloure
     UnknownVertex uv = *ai;
     auto varMapIt = _varMap.find(uv); //TODO: types
     auto assignIt = _assign.find(uv);
-    //if vertex is not assigned, i.e. it has the highest degree
+    //If vertex is not assigned, i.e. it has the highest degree
     if(varMapIt == _varMap.end() && assignIt == _assign.end()){
       _assign[uv] = fVertex;
       return true;
@@ -248,7 +238,7 @@ bool Pantelides::MatchEquation(EquationVertex fVertex, std::set<Vertex> &coloure
     //if vertex is not coloured
     if(varMapIt == _varMap.end() && colouredIt == coloured.end()){
       coloured.insert(uv);
-      EquationVertex assignedToUv = _assign.at(uv); //this exists because we would've returned in the previous for if not
+      EquationVertex assignedToUv = _assign.at(uv); //This exists because we would've returned in the previous for if not
       if(MatchEquation(assignedToUv, coloured)){
         _assign[uv] = fVertex;
         return true;
@@ -285,46 +275,77 @@ void Pantelides::InitializeVarMap(std::vector<std::pair<Expression, Expression>>
   }
 }
 
-//#define NameToRef(X)  	Ref(1,RefTuple(X,ExpList(0)))
-//Reference::Reference(Name n): ref_(Ref(1,RefTuple(n,ExpList(0)))) { }
-
-//Modelica::ReplaceExpression r = Modelica::ReplaceExpression(NameToRef(name.get()), NameToRef("i"));
-//				eleft = Apply(r,eleft);
-//				eright = Apply(r,eright);
-
-void ReplaceDerivatives(EquationVertex eqVertex){
+//TODO: not necessary for the algorithm, but maybe replace derivatives in unknown nodes too (now they're broken)
+void Pantelides::ReplaceDerivatives(EquationVertex eqVertex){
     Equation originalEquation = _graph[eqVertex].equation;
-    // Reference(Ref(1,RefTuple(name,ExpList(0))));
-    // Expression derVar = Call("der",ExpList(1,Reference(Ref(1,RefTuple(name,ExpList(0))))));
     //Find derivatives
     Modelica::DerivedNames derNames = Modelica::DerivedNames();
     std::set<Name> toDerivate = Apply(derNames, originalEquation);
     //For each derivative
     for(Name name : toDerivate){
         std::string der("der");
+        Name oldName = name;
         Name newName = name.insert(0, der);
-        Expression oldExp = Call("der", ExpList(1, Reference(name)));
+        Expression oldExp = Call("der", ExpList(1, Reference(oldName)));
         Expression newExp = Reference(newName);
-        //Replace with new var in this equation
-        Modelica::ReplaceEquation r = Modelica::ReplaceEquation(oldExp, newExp);
+        //Object for replacing with new var
+        ReplaceEquation r(oldExp, newExp);
+
         //For each equation
-        foreach_(Equation e, mmo_class.equations_ref().equations_ref()){
+        foreach_(Equation e, _mmo_class.equations_ref().equations_ref()){
+            //Replace with new var
+            Equation newEquation = Apply(r, e);
+            Equality newEquality = boost::get<Equality>(newEquation);
+            if(newEquation != e && newEquality.left_ref() != newEquality.right_ref()){ //Avoid "identity" equations
+               _mmo_class.equations_ref().eraseEquation(e);
+               _mmo_class.addEquation(newEquation);
+            }
+        }
+
+        //For each initial equation
+        foreach_(Equation e, _mmo_class.initial_eqs_ref().equations_ref()){
             //Replace with new var
             Equation newEquation = Apply(r, e);
             if(newEquation != e){
-                _mmo_class.equations_ref().erase(std::remove_if(_mmo_class.equations_ref().begin(), _mmo_class.equations_ref().end(), [](Equation x){return x == e;})); //Remove current equation
-                _mmo_class.addEquation(newEquation); //Add derivated equation
-                _graph[eqVertex].equation = newEquation;
+                _mmo_class.initial_eqs_ref().eraseEquation(e);
+                _mmo_class.addInitEquation(newEquation);
             }
         }
+
+        //Change equations in vertices (TODO: improve efficiency)
+        boost::graph_traits<CausalizationGraph>::adjacency_iterator ai, ai_end, bi, bi_end;
+	for(boost::tie(ai, ai_end) = boost::adjacent_vertices(eqVertex, _graph); ai != ai_end; ++ai){
+           UnknownVertex uv = *ai;
+           for(boost::tie(bi, bi_end) = boost::adjacent_vertices(uv, _graph); bi != bi_end; ++bi){
+              EquationVertex ev = *bi;
+              Equation evEquation = _graph[ev].equation;
+              Equation newEquation = Apply(r, evEquation);
+              if(newEquation != evEquation){
+                _graph[ev].equation = newEquation;
+              }
+
+           }
+        }
+
         //Add equation for derivative
         Equation derDefinition = Equality(oldExp, newExp);
-        _mmo_class.addEquation(derDefinition);
+        if(!(std::find(_addedEquations.begin(), _addedEquations.end(), derDefinition) != _addedEquations.end())){
+           _mmo_class.addEquation(derDefinition);
+           _addedEquations.push_back(derDefinition);
+        }
+
         //Add unknown definition
         VarInfo v(TypePrefixes(),"Real");
-        mmo_class.addVar(newName, v);
+        _mmo_class.addVar(newName, v);
+
+        //Remove duplicates from declarations
+	std::set<Name> vars;
+        unsigned size = _mmo_class.variables_.size();
+        for( unsigned i = 0; i < size; ++i ) vars.insert( _mmo_class.variables_[i] );
+        _mmo_class.variables_.assign( vars.begin(), vars.end() );
     }
 
+}
 
 }
-}
+

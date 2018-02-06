@@ -18,6 +18,7 @@
 ******************************************************************************/
 
 #include <ast/queries.h>
+#include <boost/algorithm/string/predicate.hpp>
 #include <reduceindex/simplify.h>
 
 namespace Modelica {

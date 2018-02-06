@@ -22,11 +22,12 @@
 #include <boost/variant/static_visitor.hpp>
 #include <ast/expression.h>
 #include <ast/equation.h>
+#include <set>
 
 namespace Modelica {
 
   using namespace Modelica::AST;
-  class DerivedNamesExp: public boost::static_visitor<Expression> {
+  class DerivedNamesExp: public boost::static_visitor<std::set<Name>> {
   public:
     DerivedNamesExp();
     std::set<Name> operator()(Integer v) const;
@@ -50,7 +51,7 @@ namespace Modelica {
     std::set<Name> operator()(Range) const;
   };
 
-  class DerivedNmes: public boost::static_visitor<Equation> {
+  class DerivedNames: public boost::static_visitor<std::set<Name>> {
   public:
     DerivedNames();
     std::set<Name> operator()(Connect) const;
