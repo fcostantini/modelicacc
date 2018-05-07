@@ -151,6 +151,7 @@ void Pantelides::ApplyPantelides(){
           set<EquationVertex>::iterator it = _equationSet.find(e);
           if (it != _equationSet.end()) {
             EquationVertex ev = *it;
+            ReplaceDerivatives(ev);
             Equation currentEquation = _graph[ev].equation;
 
             VertexProperty vp;
@@ -179,7 +180,6 @@ void Pantelides::ApplyPantelides(){
                 add_edge(newEquation, derAdj, ep, _graph);
               }
             }
-            ReplaceDerivatives(newEquation);
           }
         }
 
