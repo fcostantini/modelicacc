@@ -272,70 +272,43 @@ void Pantelides::InitializeVarMap(std::vector<std::pair<Expression, Expression>>
   }
 }
 
-//TODO: not necessary for the algorithm, but need to replace derivatives in unknown nodes too (now they're broken)
+//TODO: not necessary for the algorithm, but maybe replace derivatives in unknown nodes too (now they're broken)
 void Pantelides::ReplaceDerivatives(EquationVertex eqVertex){
     Equation originalEquation = _graph[eqVertex].equation;
 
+    //Find derivatives
     Modelica::DerivedNames derNames = Modelica::DerivedNames();
     std::set<Name> toDerivate = Apply(derNames, originalEquation);
 
+    //For each derivative
     for(Name name : toDerivate){
         std::string der("der");
         Name oldName = name;
         Name newName = name.insert(0, der);
         Expression oldExp = Call("der", ExpList(1, Reference(oldName)));
         Expression newExp = Reference(newName);
+        //Object for replacing with new var
         ReplaceEquation r(oldExp, newExp);
 
-        foreach_(Equation e, _mmo_class.equations_ref().equations_ref()){
-            Equation newEquation = Apply(r, e);
-            Equality newEquality = boost::get<Equality>(newEquation);
-            if(newEquation != e && newEquality.left_ref() != newEquality.right_ref()){ //Avoid "identity" equations
-               _mmo_class.equations_ref().eraseEquation(e);
-               _mmo_class.addEquation(newEquation);
-            }
+        Equation newEq = Apply(r, _graph[eqVertex].equation);
+        _graph[eqVertex].equation = newEq;
+
+        //If this is the first time we process this name
+        if(!_derivedNames.count(name)){
+          //Add equation for derivative
+          Equation derDefinition = Equality(oldExp, newExp);
+          _mmo_class.addEquation(derDefinition);
+
+          //Add unknown definition
+          VarInfo v(TypePrefixes(),"Real");
+          _mmo_class.addVar(newName, v);
+
+         _derivedNames.insert(name);
         }
-
-        foreach_(Equation e, _mmo_class.initial_eqs_ref().equations_ref()){
-            Equation newEquation = Apply(r, e);
-            if(newEquation != e){
-                _mmo_class.initial_eqs_ref().eraseEquation(e);
-                _mmo_class.addInitEquation(newEquation);
-            }
-        }
-
-        //Change equations in vertices (TODO: improve efficiency)
-        boost::graph_traits<CausalizationGraph>::adjacency_iterator ai, ai_end, bi, bi_end;
-	for(boost::tie(ai, ai_end) = boost::adjacent_vertices(eqVertex, _graph); ai != ai_end; ++ai){
-           UnknownVertex uv = *ai;
-           for(boost::tie(bi, bi_end) = boost::adjacent_vertices(uv, _graph); bi != bi_end; ++bi){
-              EquationVertex ev = *bi;
-              Equation evEquation = _graph[ev].equation;
-              Equation newEquation = Apply(r, evEquation);
-              if(newEquation != evEquation){
-                _graph[ev].equation = newEquation;
-              }
-
-           }
-        }
-
-        //Add equation for derivative
-        Equation derDefinition = Equality(oldExp, newExp);
-        if(!(std::find(_addedEquations.begin(), _addedEquations.end(), derDefinition) != _addedEquations.end())){
-           _mmo_class.addEquation(derDefinition);
-           _addedEquations.push_back(derDefinition);
-        }
-
-        //Add unknown definition
-        VarInfo v(TypePrefixes(),"Real");
-        _mmo_class.addVar(newName, v);
-
-        //Remove duplicates from declarations
-	std::set<Name> vars;
-        unsigned size = _mmo_class.variables_.size();
-        for( unsigned i = 0; i < size; ++i ) vars.insert( _mmo_class.variables_[i] );
-        _mmo_class.variables_.assign( vars.begin(), vars.end() );
     }
+    //After all names have being replaced in the node
+    _mmo_class.equations_ref().eraseEquation(originalEquation);
+    _mmo_class.addEquation(_graph[eqVertex].equation);
 
 }
 

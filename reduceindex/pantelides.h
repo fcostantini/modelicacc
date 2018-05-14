@@ -45,7 +45,7 @@ private:
   std::map<UnknownVertex, UnknownVertex> _varMap; //var to derivated var
   std::map<EquationVertex, EquationVertex> _eqMap; //eq to derivated eq
   std::map<UnknownVertex, EquationVertex> _assign; //var to eqs
-  std::vector<Equation> _addedEquations;
+  std::unordered_set<Name> _derivedNames;
 };
 }
 
