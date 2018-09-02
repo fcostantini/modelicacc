@@ -120,7 +120,11 @@ Pantelides::Pantelides(MMO_Class &mmo_class): Causalize::CausalizationStrategy(m
 }
 
 void Pantelides::ApplyPantelides(){
+  int tries = 0;
+  int max_tries = GetMaxTries();
   std::set<EquationVertex> initialEquationSet = _equationSet;
+  if (debugIsEnabled('c'))
+    cout << "Max tries: " << max_tries << endl;
   for(EquationVertex eq : initialEquationSet){
     EquationVertex fVertex = eq;
     bool match;
@@ -128,6 +132,7 @@ void Pantelides::ApplyPantelides(){
       std::set<Vertex> coloured;
       match = MatchEquation(fVertex, coloured);
       if(!match){
+        tries++;
         for(Vertex u : coloured){
           set<UnknownVertex>::iterator it = _unknownSet.find(u);
           if (it != _unknownSet.end()) {
@@ -196,19 +201,24 @@ void Pantelides::ApplyPantelides(){
 
         fVertex = _eqMap.at(fVertex);
       }
-    } while(!match);
+    } while(!match && tries <= max_tries);
   }
 
   GraphPrinter<VertexProperty,EdgeProperty> gp(_graph);
   gp.printGraph("graph_after_pantelides.dot");
 
   std::map<UnknownVertex, EquationVertex>::iterator assignIt;
-  if (debugIsEnabled('c')){
-    std::cout << "Final assignation: \n";
-    for ( assignIt = _assign.begin(); assignIt != _assign.end(); assignIt++ ){
-      UnknownVertex unknown = assignIt -> first;
-      EquationVertex equation = assignIt -> second;
-      std::cout << _graph[unknown].unknown() << " -> " << _graph[equation].index+1 << "\n";
+  if(tries > max_tries){
+    std::cout << "ERROR: Derivation limit reached, it's very likely the system is singular and its index is infinite\n\n";
+  }
+  else {
+    if (debugIsEnabled('c')){
+      std::cout << "Final assignation: \n";
+      for ( assignIt = _assign.begin(); assignIt != _assign.end(); assignIt++ ){
+        UnknownVertex unknown = assignIt -> first;
+        EquationVertex equation = assignIt -> second;
+        std::cout << _graph[unknown].unknown() << " -> " << _graph[equation].index+1 << "\n";
+      }
     }
   }
 
@@ -310,6 +320,10 @@ void Pantelides::ReplaceDerivatives(EquationVertex eqVertex){
     _mmo_class.equations_ref().eraseEquation(originalEquation);
     _mmo_class.addEquation(_graph[eqVertex].equation);
 
+}
+
+int Pantelides::GetMaxTries(){
+    return _mmo_class.equations_ref().equations_ref().size() * _max_tries_ratio;
 }
 
 }

@@ -39,7 +39,9 @@ private:
   void MakeGraphSets();
   void InitializeVarMap(std::vector<std::pair<Expression, Expression>> expMap);
   void ReplaceDerivatives(EquationVertex eqVertex);
+  int GetMaxTries();
 
+  const int _max_tries_ratio = 2;
   std::set<UnknownVertex> _unknownSet;
   std::set<EquationVertex> _equationSet;
   std::map<UnknownVertex, UnknownVertex> _varMap; //var to derivated var
