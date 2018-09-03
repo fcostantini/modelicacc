@@ -24,6 +24,7 @@
 #include <ast/ast_types.h>
 #include <causalize/for_unrolling/process_for_equations.h>
 #include <util/debug.h>
+#include <util/random_string.h>
 #include <util/derivate.h>
 #include <util/derivate_equality.h>
 #include <reduceindex/variables_collector.h>
@@ -292,34 +293,40 @@ void Pantelides::ReplaceDerivatives(EquationVertex eqVertex){
 
     //For each derivative
     for(Name name : toDerivate){
-        std::string der("der");
         Name oldName = name;
-        Name newName = name.insert(0, der);
         Expression oldExp = Call("der", ExpList(1, Reference(oldName)));
-        Expression newExp = Reference(newName);
+        Expression newExp;
+        Name newName;
+        auto nameIt = _derivedNames.find(oldName);
+
+        if(nameIt == _derivedNames.end()){ //First time we derive this name
+          std::string der("der");
+          std::string prefix = der + random_string(3) + "_";
+          newName = name.insert(0, prefix);
+          newExp = Reference(newName);
+          //Add unknown definition
+          VarInfo v(TypePrefixes(),"Real");
+          _mmo_class.addVar(newName, v);
+          //Add to map
+         _derivedNames[oldName] = newName;
+          //Add equation for derivative
+          Equation derDefinition = Equality(oldExp, newExp);
+          _mmo_class.addEquation(derDefinition);
+        } else {
+          //Get from map
+          newName = nameIt->second;
+          newExp = Reference(newName);
+        }
+
         //Object for replacing with new var
         ReplaceEquation r(oldExp, newExp);
 
         Equation newEq = Apply(r, _graph[eqVertex].equation);
         _graph[eqVertex].equation = newEq;
-
-        //If this is the first time we process this name
-        if(!_derivedNames.count(name)){
-          //Add equation for derivative
-          Equation derDefinition = Equality(oldExp, newExp);
-          _mmo_class.addEquation(derDefinition);
-
-          //Add unknown definition
-          VarInfo v(TypePrefixes(),"Real");
-          _mmo_class.addVar(newName, v);
-
-         _derivedNames.insert(name);
-        }
     }
     //After all names have being replaced in the node
     _mmo_class.equations_ref().eraseEquation(originalEquation);
     _mmo_class.addEquation(_graph[eqVertex].equation);
-
 }
 
 int Pantelides::GetMaxTries(){

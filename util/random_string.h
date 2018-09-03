@@ -1,4 +1,3 @@
-
 /*****************************************************************************
 
     This file is part of Modelica C Compiler.
@@ -17,28 +16,5 @@
     along with Modelica C Compiler.  If not, see <http://www.gnu.org/licenses/>.
 
 ******************************************************************************/
-/*
- * La idea es hacer una función que tome una igualdad y devuelva la misma pero con sus miembros derivados.
- * 
- */
- 
-#include <util/derivate_equality.h>
-#include <ast/equation.h>
-#include <ast/queries.h>
-#include <util/derivate.h>
-#include <boost/variant/get.hpp>
-#include <util/ast_visitors/partial_eval_expression.h>
 
-
-namespace Modelica {
-  Equality derivate_equality(Equality eq, VarSymbolTable syms) {
-    PartialEvalExpression eval(syms, true);
-    Expression left= Apply(eval,eq.left_ref());    
-    Expression right= Apply(eval,eq.right_ref());
-    eq.left_ref()=derivate(left,syms);
-    eq.right_ref()=derivate(right,syms);
-// aplicar evaluador al resultado... 
-    return eq;
-  }
-
-}
+std::string random_string( size_t length );

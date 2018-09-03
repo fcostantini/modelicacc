@@ -4,6 +4,7 @@ SRC_REDUCEINDEX := reduceindex/main.cpp \
                    reduceindex/variables_collector.cpp \
                    reduceindex/derived_names.cpp \
                    util/debug.cpp \
+                   util/random_string.cpp \
                    util/table.cpp \
                    util/type.cpp \
                    util/derivate.cpp \
